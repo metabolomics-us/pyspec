@@ -1,9 +1,12 @@
 import os
+from typing import List, Optional
 
 import math
 import pymzml
 import requests
 from tqdm import tqdm
+
+from pyspec.filters import Filter
 
 
 class MSMSFinder:
@@ -16,11 +19,12 @@ class MSMSFinder:
 
         """
 
-    def locate(self, msmsSource: str, callback):
+    def locate(self, msmsSource: str, callback, filters: Optional[List[Filter]] = None):
         """
             loads the given source and invokes the callback for each spectra found
         :param msmsSource: needs to be a URL of some kind, file:// http:// you figure it out
         :param callback: callback, to work on all the parse MSMS spectra and do some magic with them
+        :param filters: a list of optional filters to be applied, to reduce processing overhead
         :return:
         """
 
@@ -32,8 +36,11 @@ class MSMSFinder:
                             unit='spectra',
                             unit_scale=True, leave=True, desc=f"analyzing spectra in {file_name}"):
 
-            # we only care about msms spectra
-            if spectra.ms_level > 1:
+            if filters is not None:
+                for x in filters:
+                    if x.accept(spectra):
+                        callback(spectra, file_name)
+            else:
                 callback(spectra, file_name)
 
     def download_rawdata(self, source, dir: str = "data"):
