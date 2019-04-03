@@ -46,3 +46,27 @@ def test_locate_with_msms_filter(source):
 
     finder.locate(msmsSource=source, callback=callback, filters=[MSMinLevelFilter(2)])
     assert count > 0
+
+
+@pytest.mark.parametrize("source", sources)
+def test_locate_with_msms_and_compute_count(source):
+    """
+
+    :return:
+    """
+    finder = MSMSFinder()
+
+    count = {}
+
+    def callback(msms: Spectrum, file_name: str):
+        nonlocal count
+
+        if msms.ms_level not in count:
+            count[msms.ms_level] = 0
+
+        count[msms.ms_level] = count[msms.ms_level] + 1
+
+    finder.locate(msmsSource=source, callback=callback)
+
+    for key in count:
+        print(f"the obsderved count of spectra with level {key} in file {source} was {count[key]}")
