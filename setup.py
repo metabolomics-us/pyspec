@@ -13,8 +13,9 @@ setup(name='pyspec',
       author='Gert Wohlgemuth',
       author_email='berlinguyinca@gmail.com',
       license='GPLv3',
-      packages=['rtmtb'],
+      packages=['pyspec'],
       scripts=[
+          "bin/bv_to_msp.py"
       ],
       setup_requires=['pytest-runner'],
       tests_require=[
