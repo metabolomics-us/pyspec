@@ -1,3 +1,7 @@
+from pyspec.loader import Spectra
+from pyspec.loader.binvestigate import BinVestigate
+
+
 class MSP:
     """
     helper class to quickly generate a MSP file from a formated spectra string.
@@ -7,7 +11,13 @@ class MSP:
     ion:intensity ion:intensity
     """
 
-    def to(self, spectra: str, name: str, properties: dict) -> str:
+    def from_bin(self, id: int) -> str:
+        return self.from_spectra(BinVestigate().load(id))
+
+    def from_spectra(self, spectra: Spectra) -> str:
+        return self.to(spectra=spectra.spectra, name=spectra.name, properties={"Ms Level": spectra.ms_level})
+
+    def from_str(self, spectra: str, name: str, properties: dict) -> str:
         """
         generates a MSP representation of the incomming data
         :param spectra:
