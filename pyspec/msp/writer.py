@@ -15,7 +15,7 @@ class MSP:
         return self.from_spectra(BinVestigate().load(id))
 
     def from_spectra(self, spectra: Spectra) -> str:
-        return self.to(spectra=spectra.spectra, name=spectra.name, properties={"Ms Level": spectra.ms_level})
+        return self.from_str(spectra=spectra.spectra, name=spectra.name, properties={"Ms Level": spectra.ms_level})
 
     def from_str(self, spectra: str, name: str, properties: dict) -> str:
         """
@@ -28,8 +28,8 @@ class MSP:
 
         msp = []
         msp.append("Name: {}".format(name))
-        for k, v in properties:
-            msp.append("{}: {}".format(k, v))
+        for k in properties:
+            msp.append("{}: {}".format(k, properties[k]))
 
         msp.append('Num Peaks: %d' % len(spectra))
         msp.extend(' '.join(x.split(':')) for x in spectra.split())
