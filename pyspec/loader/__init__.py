@@ -8,3 +8,4 @@ class Spectra(NamedTuple):
     spectra: str
     name: str
     ms_level: int = 1
+    properties: dict = {}

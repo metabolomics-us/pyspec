@@ -1,0 +1,11 @@
+species	organ	binid	bin	count
+human	adipose	2	alanine	15
+human	adipose	3	valine	69
+human	adipose	4	phosphate	62
+human	adipose	5	glucose	18
+human	adipose	6	glycine	69
+human	adipose	8	proline	32
+human	adipose	9	leucine	60
+human	adipose	10	oxoproline	69
+human	adipose	11	palmitic acid	70
+human	adipose	12	lysine	64
