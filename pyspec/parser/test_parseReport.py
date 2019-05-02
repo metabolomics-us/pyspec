@@ -25,3 +25,4 @@ def test_parse_file_success():
     assert len(data) == 10
 
     assert data[0].name == "alanine"
+    assert data[0].spectra != ""
