@@ -73,7 +73,7 @@ class MSMSSpectrum(Spectrum):
     def reverse_similarity(self, library_spectrum, tolerance, peak_count_penalty=True):
         return msdial_similarity.reverse_similarity(self, library_spectrum, tolerance, peak_count_penalty=peak_count_penalty)
 
-    def similarity(self, library_spectrum, tolerance, peak_count_penalty=True):
+    def cosine_similarity(self, library_spectrum, tolerance, peak_count_penalty=True):
         return msdial_similarity.spectral_similarity(self, library_spectrum, tolerance, peak_count_penalty=peak_count_penalty)
 
     def total_similarity(self, library_spectrum, ms1_tolerance, ms2_tolerance, peak_count_penalty=True):
