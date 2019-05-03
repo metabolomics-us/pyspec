@@ -79,7 +79,6 @@ def main():
     parser.add_argument("input", type=str, help="please provide a correctly formatted input file")
     parser.add_argument("output", type=str, help="where would you like to store the result")
     parser.add_argument("--top", type=int, help="limit output to the top-n reported bin's by count", default=0)
-    parser.add_argument("--format", type=str, help="please specify the output format, either CSV or MSP", default="MSP")
 
     args = parser.parse_args()
 
@@ -90,13 +89,12 @@ def main():
         parsed = sorted(parsed, key=lambda x: x.properties['annotations'], reverse=True)
         parsed = parsed[:10]
 
-    format = args.format.lower()
+    msp = MSP()
 
-    if format == "msp":
-        msp = MSP()
-
-        for x in parsed:
-            print(msp.from_spectra(x))
+    with open(args.output, 'w') as out:
+        for x in tqdm(parsed, "writing data out"):
+            out.write(msp.from_spectra(x))
+            out.write("")
 
 
 if __name__ == "__main__": main()
