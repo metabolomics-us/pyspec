@@ -60,11 +60,8 @@ class MSMSSpectrum(Spectrum):
 
     @property
     def precursor(self):
+        """Used for convenience, should not be used in cases where the spectrum source may be pymzml"""
         return self._precursors[0][0]
-    
-    @property
-    def spectrum(self):
-        return self.peaks('raw')
 
 
     def presence_similarity(self, library_spectrum, tolerance):

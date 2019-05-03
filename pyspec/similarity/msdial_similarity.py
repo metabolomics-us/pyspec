@@ -306,7 +306,7 @@ def total_msms_similarity(s, lib, ms1_tolerance, ms2_tolerance, peak_count_penal
     mass_factor = 1
 
     # Raw similarities
-    accurate_mass_sim = gaussian_similarity(s.precursor, lib.precursor, ms1_tolerance)
+    accurate_mass_sim = gaussian_similarity(s.precursors[0][0], lib.precursors[0][0], ms1_tolerance)
 
     spectral_sim = spectral_similarity(s, lib, ms2_tolerance, peak_count_penalty=peak_count_penalty)
     reverse_sim = reverse_similarity(s, lib, ms2_tolerance, peak_count_penalty=peak_count_penalty)
