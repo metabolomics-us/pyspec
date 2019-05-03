@@ -19,7 +19,7 @@ def test_parse_file_fail_no_file():
 def test_parse_file_success():
     report = ParseReport()
 
-    data = report.parse_file("test.txt")
+    data = report.parse_file("test.txt",delimiter="\t")
 
     assert data
     assert len(data) == 10

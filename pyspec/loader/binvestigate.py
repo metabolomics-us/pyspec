@@ -19,5 +19,7 @@ class BinVestigate:
         return Spectra(
             spectra=data['spectra'],
             name=data['name'],
-            ms_level=1
+            ms_level=1,
+            splash=data['splash'] if "splash" in data else None,
+            inchiKey=data['inchikey'] if "inchikey" in data else None
         )
