@@ -35,7 +35,7 @@ class MSP:
         for k in properties:
             msp.append("{}: {}".format(k, properties[k]))
 
-        msp.append('Num Peaks: %d' % len(spectra))
+        msp.append('Num Peaks: %d' % len(spectra.split(":")))
         msp.extend(' '.join(x.split(':')) for x in spectra.split())
 
         return '\n'.join(msp) + "\n"
