@@ -1,72 +1,32 @@
-import pytest
-from pymzml.spec import Spectrum
-
-from pyspec.filters import MSMinLevelFilter
-from pyspec.msms_finder import MSMSFinder
-
-sources = [
-    "http://luna.fiehnlab.ucdavis.edu/D%3A/mzml/B1_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml",  # should download this file
-    "data/B1_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml"  # should load this file directly
-]
+from pyspec.msms_spectrum import MSMSSpectrum
+from pyspec.similarity.msdial_similarity import *
 
 
-@pytest.mark.parametrize("source", sources)
-def test_locate_without_filter(source):
-    """
+def test_msms_spectrum_similarity():
+    a = MSMSSpectrum('10:100', precursor_mz=100)
+    b = MSMSSpectrum('10.5:100', precursor_mz=100)
 
-    :return:
-    """
-    finder = MSMSFinder()
+    assert a.presence_similarity(b, 0.51) >= 0.999
+    assert a.presence_similarity(b, 0.49) == 0
+    assert a.reverse_similarity(b, 0.51, peak_count_penalty=False) >= 0.999
+    assert a.reverse_similarity(b, 0.49, peak_count_penalty=False) == 0
+    assert a.spectral_similarity(b, 0.51, peak_count_penalty=False) >= 0.999
+    assert a.spectral_similarity(b, 0.49, peak_count_penalty=False) == 0
 
-    count = 0
+def test_peak_count_penalty():
+    a = MSMSSpectrum('10:100', precursor_mz=100)
+    assert a.spectral_similarity(a, 1, peak_count_penalty=False) > a.spectral_similarity(a, 1)
 
-    def callback(msms: Spectrum, file_name: str):
-        nonlocal count
-        count = count + 1
+def test_presence_similarity():
+    a = MSMSSpectrum('10:100 20:50', precursor_mz=100)
+    b = MSMSSpectrum('10:100', precursor_mz=100)
 
-    finder.locate(msmsSource=source, callback=callback)
+    assert a.presence_similarity(a, 1) >= 0.999
+    assert b.presence_similarity(b, 1) >= 0.999
+    assert b.presence_similarity(a, 1) < 1
 
-    assert count > 0
+def test_reverse_similarity():
+    a = MSMSSpectrum('10:100 20:50', precursor_mz=100)
+    b = MSMSSpectrum('10:100', precursor_mz=100)
 
-
-@pytest.mark.parametrize("source", sources)
-def test_locate_with_msms_filter(source):
-    """
-
-    :return:
-    """
-    finder = MSMSFinder()
-
-    count = 0
-
-    def callback(msms: Spectrum, file_name: str):
-        nonlocal count
-        count = count + 1
-        assert msms.ms_level > 1
-
-    finder.locate(msmsSource=source, callback=callback, filters=[MSMinLevelFilter(2)])
-    assert count > 0
-
-
-@pytest.mark.parametrize("source", sources)
-def test_locate_with_msms_and_compute_count(source):
-    """
-
-    :return:
-    """
-    finder = MSMSFinder()
-
-    count = {}
-
-    def callback(msms: Spectrum, file_name: str):
-        nonlocal count
-
-        if msms.ms_level not in count:
-            count[msms.ms_level] = 0
-
-        count[msms.ms_level] = count[msms.ms_level] + 1
-
-    finder.locate(msmsSource=source, callback=callback)
-
-    for key in count:
-        print(f"the obsderved count of spectra with level {key} in file {source} was {count[key]}")
+    assert a.reverse_similarity(b, 1, peak_count_penalty=False) >= b.reverse_similarity(a, 1, peak_count_penalty=False)
