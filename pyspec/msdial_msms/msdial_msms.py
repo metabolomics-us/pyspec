@@ -236,7 +236,6 @@ def collectFeatures(sheet, filename):
             features = features + (feature,)
             #count = count + 1
         current_row = current_row + 1
-        print(current_row)
         
     print(str(len(features)) + ' features with MSMS found in ' + filename)
     return features
