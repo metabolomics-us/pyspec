@@ -18,7 +18,7 @@ class Encoder:
     """
 
     def encode(self, spec: Spectra, width: int = 512, height: int = 512, min_mz: int = 0, max_mz: int = 2000,
-               axis=False):
+               axis=False,intensity_max = 10000):
         # dumb approach to find max mz
 
         data = []
@@ -48,28 +48,40 @@ class Encoder:
         # drop data outside min and max
         dataframe = dataframe[(dataframe['nominal'] >= min_mz) & (dataframe['nominal'] <= max_mz)]
 
-        dataframe['intensity_norm'] = dataframe['intensity'] / dataframe['intensity'].max() * 100
         dataframe['intensity_min_max'] = (dataframe['intensity'] - dataframe['intensity'].min()) / (
                 dataframe['intensity'].max() - dataframe['intensity'].min())
 
-        fix, ax = plt.subplots(2, 1)
+        # formatting
+        fig = plt.figure(constrained_layout=True)
 
-        ax[0].scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=2)
-        ax[0].set_xlim(min_mz, max_mz)
-        ax[0].set_ylim(0, 1)
+        widths = [1]
+        heights = [16, 16, 1]
+        specs = fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
 
-        ax[1].stem(dataframe['mz'], dataframe['intensity_min_max'])
-        ax[1].set_xlim(min_mz, max_mz)
-        ax[1].set_ylim(0, 1)
-        ax[1].spines['top'].set_visible(False)
-        ax[1].spines['right'].set_visible(False)
+        ax0 = plt.subplot(specs[0, 0])
+        ax1 = plt.subplot(specs[1, 0])
+        ax2 = plt.subplot(specs[2, 0])
+
+        ax0.scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=2)
+        ax0.set_xlim(min_mz, max_mz)
+        ax0.set_ylim(0, 1)
+
+        ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ')
+        ax1.set_xlim(min_mz, max_mz)
+        ax1.set_ylim(0, 1)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+
+        ax2.barh("intensity", dataframe['intensity'].max(), align='center')
+        ax2.set_xlim(0, intensity_max)
 
         axis = True
-
         if not axis:
-            ax[0].axis('off')
-            ax[1].axis('off')
+            ax0.axis('off')
+            ax1.axis('off')
+            ax2.axis('off')
 
+        plt.tight_layout()
         plt.show()
         return plt
 
