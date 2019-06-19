@@ -1,5 +1,6 @@
 import argparse
 import csv
+import traceback
 from typing import List
 
 from pyspec.loader import Spectra
@@ -20,7 +21,9 @@ class ParseReport:
 
     """
 
-    def parse_file(self, file: str, delimiter=",") -> List[Spectra]:
+    _cache = {}
+
+    def parse_file(self, file: str, delimiter=",", known_only=False) -> List[Spectra]:
         """
         parses a file
         :param file:
@@ -29,7 +32,7 @@ class ParseReport:
 
         result = []
         with open(file, 'r') as f:
-            reader = csv.reader(f, delimiter=delimiter, quotechar="\"")
+            reader = csv.reader(f, delimiter=delimiter, quotechar='"', quoting=csv.QUOTE_ALL, skipinitialspace=True)
 
             counter = 0
             for row in tqdm(reader, "reading data file..."):
@@ -37,8 +40,16 @@ class ParseReport:
                 if counter == 0:
                     counter = counter + 1
                 else:
-                    spectra = self.parse_string(row)
-                    result.append(spectra)
+                    try:
+                        spectra = self.parse_string(row)
+
+                        if known_only:
+                            if spectra.inchiKey is not None:
+                                result.append(spectra)
+                        else:
+                            result.append(spectra)
+                    except Exception as e:
+                        traceback.print_exc()
 
         return result
 
@@ -52,18 +63,21 @@ class ParseReport:
         assert len(data) == 5, f"incoming data needs to be a list of 5, it was of len {len(data)}" \
             f" and content was {data}"
 
-        spectra = self.load_spectra(int(data[2]))
-        return Spectra(
-            name=data[3],
-            spectra=spectra.spectra,
-            inchiKey=spectra.inchiKey,
-            splash=spectra.splash,
-            properties={
-                "organ": data[1],
-                "species": data[0],
-                "annotations": data[4]
-            }
-        )
+        try:
+            spectra = self.load_spectra(int(data[2]))
+            return Spectra(
+                name=data[3],
+                spectra=spectra.spectra,
+                inchiKey=spectra.inchiKey,
+                splash=spectra.splash,
+                properties={
+                    "organ": data[1],
+                    "species": data[0],
+                    "annotations": data[4]
+                }
+            )
+        except Exception as e:
+            raise Exception(f"error observed at string to parse: {data}")
 
     def load_spectra(self, id: int) -> Spectra:
         """
@@ -71,7 +85,10 @@ class ParseReport:
         :param id:
         :return:
         """
-        return BinVestigate().load(id)
+        if id not in self._cache:
+            self._cache[id] = BinVestigate().load(id)
+
+        return self._cache[id]
 
 
 def main():
@@ -83,18 +100,18 @@ def main():
     args = parser.parse_args()
 
     report = ParseReport()
-    parsed = report.parse_file(args.input)
+    parsed = report.parse_file(args.input, known_only=True)
 
     if args.top > 0:
         parsed = sorted(parsed, key=lambda x: x.properties['annotations'], reverse=True)
-        parsed = parsed[:10]
+        parsed = parsed[:args.top]
 
     msp = MSP()
 
     with open(args.output, 'w') as out:
         for x in tqdm(parsed, "writing data out"):
             out.write(msp.from_spectra(x))
-            out.write("")
+            out.write("\n")
 
 
 if __name__ == "__main__": main()

@@ -1,4 +1,6 @@
 import os
+
+from pymzml.spec import Spectrum
 from typing import List, Optional
 
 import math
@@ -7,12 +9,27 @@ import requests
 from tqdm import tqdm
 
 from pyspec.filters import Filter
+from pyspec.loader import Spectra
+import numpy as np
 
 
 class MSMSFinder:
     """
     finds all the MSMS spectra in the given file and if it's an url, download it first
     """
+
+    def toSpectra(self, spectra: Spectrum) -> Spectra:
+        peaks = spectra.peaks("centroided")
+
+        f = lambda x: "{}:{}".format(x[0], x[1])
+        result = []
+        for x in peaks:
+            result.append(f(x))
+
+        result = " ".join(result)
+        return Spectra(
+            spectra=result
+        )
 
     def __init__(self):
         """
@@ -35,6 +52,8 @@ class MSMSFinder:
         for spectra in tqdm(reader, total=reader.get_spectrum_count(),
                             unit='spectra',
                             unit_scale=True, leave=True, desc=f"analyzing spectra in {file_name}"):
+
+            spectra.convert = self.toSpectra
 
             if filters is not None:
                 for x in filters:

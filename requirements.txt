@@ -3,6 +3,10 @@ requests
 pytest
 regex
 git+git://github.com/metabolomics-us/carpy.git#egg=stasis-client&subdirectory=stasis-client
-git+git://github.com/berlinguyinca/spectra-hash.git@#egg=splash&subdirectory=python
 git+git://github.com/pymzml/pymzML.git
 tqdm
+keras
+psycopg2-binary
+matplotlib
+seaborn
+git+git://github.com/berlinguyinca/spectra-hash.git@#egg=splash&subdirectory=python
