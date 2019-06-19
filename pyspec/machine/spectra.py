@@ -14,11 +14,11 @@ from pyspec.loader import Spectra
 
 class Encoder:
     """
-    class to easily encode spectra into a graphical form
+    class to easily encode spectra into a graphical form, to be used for machine learning
     """
 
     def encode(self, spec: Spectra, width: int = 512, height: int = 512, min_mz: int = 0, max_mz: int = 2000,
-               axis=False,intensity_max = 10000):
+               axis=False, intensity_max=1000):
         # dumb approach to find max mz
 
         data = []
@@ -66,16 +66,15 @@ class Encoder:
         ax0.set_xlim(min_mz, max_mz)
         ax0.set_ylim(0, 1)
 
-        ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ')
+        ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black')
         ax1.set_xlim(min_mz, max_mz)
         ax1.set_ylim(0, 1)
         ax1.spines['top'].set_visible(False)
         ax1.spines['right'].set_visible(False)
 
-        ax2.barh("intensity", dataframe['intensity'].max(), align='center')
+        ax2.barh("intensity", dataframe['intensity'].max(), align='center',color='black')
         ax2.set_xlim(0, intensity_max)
 
-        axis = True
         if not axis:
             ax0.axis('off')
             ax1.axis('off')
@@ -86,7 +85,7 @@ class Encoder:
         return plt
 
     def encodes(self, spectra: List[Spectra], width: int = 512, height: int = 512, min_mz: int = 0,
-                max_mz: int = 200, directory: str = "data/encoded"):
+                max_mz: int = 200, directory: str = "data/encoded", axis=None, max_intensity=1000):
         """
         encodes a spectra as picture. Conceptually wise
         we will render 3 dimensions
@@ -102,6 +101,6 @@ class Encoder:
         import pathlib
         pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
         for spec in spectra:
-            plt = self.encode(spec, width, height, min_mz, max_mz)
+            plt = self.encode(spec, width, height, min_mz, max_mz, axis, max_intensity)
             name = Splash().splash(Spectrum(spec.spectra, SpectrumType.MS))
             plt.savefig("{}/{}.png".format(directory, name))
