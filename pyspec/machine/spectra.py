@@ -17,8 +17,18 @@ class Encoder:
     class to easily encode spectra into a graphical form, to be used for machine learning
     """
 
-    def encode(self, spec: Spectra, width: int = 512, height: int = 512, min_mz: int = 0, max_mz: int = 2000,
-               axis=False, intensity_max=1000):
+    def __init__(self, width=512, height=512, min_mz=0, max_mz=2000, plot_axis=False, intensity_max=1000):
+        """
+            inits the encoder with some standard settings
+        """
+        self.width = width
+        self.height = height
+        self.min_mz = min_mz
+        self.max_mz = max_mz
+        self.axis = plot_axis
+        self.intensity_max = intensity_max
+
+    def encode(self, spec: Spectra):
         # dumb approach to find max mz
 
         data = []
@@ -46,7 +56,7 @@ class Encoder:
         dataframe = dataframe.groupby(dataframe['mz'].apply(lambda x: round(x, 5))).sum()
 
         # drop data outside min and max
-        dataframe = dataframe[(dataframe['nominal'] >= min_mz) & (dataframe['nominal'] <= max_mz)]
+        dataframe = dataframe[(dataframe['nominal'] >= self.min_mz) & (dataframe['nominal'] <= self.max_mz)]
 
         dataframe['intensity_min_max'] = (dataframe['intensity'] - dataframe['intensity'].min()) / (
                 dataframe['intensity'].max() - dataframe['intensity'].min())
@@ -63,17 +73,17 @@ class Encoder:
         ax2 = plt.subplot(specs[2, 0])
 
         ax0.scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=2)
-        ax0.set_xlim(min_mz, max_mz)
+        ax0.set_xlim(self.min_mz, self.max_mz)
         ax0.set_ylim(0, 1)
 
         ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black')
-        ax1.set_xlim(min_mz, max_mz)
+        ax1.set_xlim(self.min_mz, self.max_mz)
         ax1.set_ylim(0, 1)
         ax1.spines['top'].set_visible(False)
         ax1.spines['right'].set_visible(False)
 
         ax2.barh("intensity", dataframe['intensity'].max(), align='center',color='black')
-        ax2.set_xlim(0, intensity_max)
+        ax2.set_xlim(0, self.intensity_max)
 
         if not axis:
             ax0.axis('off')
@@ -84,8 +94,7 @@ class Encoder:
         plt.show()
         return plt
 
-    def encodes(self, spectra: List[Spectra], width: int = 512, height: int = 512, min_mz: int = 0,
-                max_mz: int = 200, directory: str = "data/encoded", axis=None, max_intensity=1000):
+    def encodes(self, spectra: List[Spectra],directory:str="data"):
         """
         encodes a spectra as picture. Conceptually wise
         we will render 3 dimensions
@@ -101,6 +110,6 @@ class Encoder:
         import pathlib
         pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
         for spec in spectra:
-            plt = self.encode(spec, width, height, min_mz, max_mz, axis, max_intensity)
+            plt = self.encode(spec)
             name = Splash().splash(Spectrum(spec.spectra, SpectrumType.MS))
             plt.savefig("{}/{}.png".format(directory, name))
