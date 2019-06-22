@@ -1,10 +1,10 @@
 import pytest
 from pymzml.spec import Spectrum
 
-from pyspec.filters import MSMinLevelFilter
+from pyspec.parser.pymzl.filters import MSMinLevelFilter
 from pyspec.loader.binbase import BinBaseLoader
 from pyspec.machine.spectra import Encoder
-from pyspec.msms_finder import MSMSFinder
+from pyspec.parser.pymzl.msms_finder import MSMSFinder
 
 
 def test_encode():

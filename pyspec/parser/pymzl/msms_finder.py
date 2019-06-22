@@ -8,9 +8,8 @@ import pymzml
 import requests
 from tqdm import tqdm
 
-from pyspec.filters import Filter
+from pyspec.parser.pymzl.filters import Filter
 from pyspec.loader import Spectra
-import numpy as np
 
 
 class MSMSFinder:

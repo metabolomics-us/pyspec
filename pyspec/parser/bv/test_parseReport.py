@@ -1,8 +1,6 @@
-from unittest import TestCase
-
 from pytest import fail
 
-from pyspec.parser.parse_bv_report import ParseReport
+from pyspec.parser.bv.parse_bv_report import ParseReport
 
 
 def test_parse_file_fail_no_file():
