@@ -1,14 +1,10 @@
-import random
 from typing import List
+
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize, Colormap
-from scipy.interpolate import griddata
 
 plt.style.use('seaborn-white')
-import numpy as np
 import math
 import pandas as pd
-import seaborn as sns
 from pyspec.loader import Spectra
 
 
@@ -72,7 +68,7 @@ class Encoder:
         ax1.spines['top'].set_visible(False)
         ax1.spines['right'].set_visible(False)
 
-        ax2.barh("intensity", dataframe['intensity'].max(), align='center',color='black')
+        ax2.barh("intensity", dataframe['intensity'].max(), align='center', color='black')
         ax2.set_xlim(0, intensity_max)
 
         if not axis:
@@ -81,7 +77,7 @@ class Encoder:
             ax2.axis('off')
 
         plt.tight_layout()
-        plt.show()
+#        plt.show()
         return plt
 
     def encodes(self, spectra: List[Spectra], width: int = 512, height: int = 512, min_mz: int = 0,
@@ -103,4 +99,4 @@ class Encoder:
         for spec in spectra:
             plt = self.encode(spec, width, height, min_mz, max_mz, axis, max_intensity)
             name = Splash().splash(Spectrum(spec.spectra, SpectrumType.MS))
-            plt.savefig("{}/{}.png".format(directory, name))
+            plt.savefig("{}/{}.png".format(directory, name),dpi=self.dpi)

@@ -13,7 +13,7 @@ def test_encode():
     data = binbase.load_spectra_for_bin_as_list(13, 1000)
 
     encoder = Encoder()
-    encoded = encoder.encodes(data)
+    encoded = encoder.encodes(data,max_intensity=10000000)
 
 
 sources = [
@@ -28,6 +28,6 @@ def test_encode_msms(source):
     encoder = Encoder()
 
     def callback(msms: Spectrum, file_name: str):
-        encoded = encoder.encode(msms.convert(msms))
+        encoded = encoder.encode(msms.convert(msms),intensity_max=1000)
 
     finder.locate(msmsSource=source, callback=callback, filters=[MSMinLevelFilter(2)])
