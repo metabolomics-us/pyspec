@@ -1,4 +1,7 @@
+import os
 from abc import abstractmethod
+
+from pandas import DataFrame
 
 
 class LabelGenerator:
@@ -13,9 +16,28 @@ class LabelGenerator:
     def generate_labels(self, input: str, callback):
         """
         :param input: the input file to utilize
-        :param callback: def callback(splash, class)
+        :param callback: def callback(identifier, class)
         :return:
         """
+
+    def generate_dataframe(self, input) -> DataFrame:
+        """
+        generates a dataframe for the given input with all the internal labels
+        :param input:
+        :return:
+        """
+        data = []
+
+        def callback(id, category):
+            nonlocal data
+            data.append({
+                "file": id,
+                "class": category
+            })
+
+        self.generate_labels(input, callback)
+
+        return DataFrame(data)
 
 
 class DirectoryLabelGenerator(LabelGenerator):
@@ -37,4 +59,8 @@ class DirectoryLabelGenerator(LabelGenerator):
     """
 
     def generate_labels(self, input: str, callback):
-        pass
+        data = "{}/train".format(input)
+
+        for category in os.listdir(data):
+            for file in os.listdir("{}/{}".format(data, category)):
+                callback(file, category)
