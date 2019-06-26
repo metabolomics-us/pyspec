@@ -1,8 +1,8 @@
 import pytest
 from pymzml.spec import Spectrum
 
-from pyspec.filters import MSMinLevelFilter
-from pyspec.msms_finder import MSMSFinder
+from pyspec.parser.pymzl.filters import MSMinLevelFilter
+from pyspec.parser.pymzl.msms_finder import MSMSFinder
 
 sources = [
     "http://luna.fiehnlab.ucdavis.edu/D%3A/mzml/B1_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml",  # should download this file

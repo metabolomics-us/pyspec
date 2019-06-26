@@ -1,12 +1,11 @@
 import argparse
-import collections
 import json
 import os
 import tqdm
 
 from typing import List
 
-from pyspec.msms_spectrum import MSMSSpectrum
+from pyspec.parser.pymzl.msms_spectrum import MSMSSpectrum
 
 
 def load_libraries(libraries: List[str]):

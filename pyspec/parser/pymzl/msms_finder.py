@@ -1,16 +1,14 @@
 import os
-
-from pymzml.spec import Spectrum
 from typing import List, Optional
 
 import math
 import pymzml
 import requests
+from pymzml.spec import Spectrum
 from tqdm import tqdm
 
-from pyspec.filters import Filter
 from pyspec.loader import Spectra
-import numpy as np
+from pyspec.parser.pymzl.filters import Filter
 
 
 class MSMSFinder:
@@ -49,9 +47,12 @@ class MSMSFinder:
 
         reader = pymzml.run.Reader(file_name)
 
-        for spectra in tqdm(reader, total=reader.get_spectrum_count(),
-                            unit='spectra',
-                            unit_scale=True, leave=True, desc=f"analyzing spectra in {file_name}"):
+        def evaluate(spectra):
+            """
+            allows for easy multiprocessing
+            :param spectra:
+            :return:
+            """
 
             spectra.convert = self.toSpectra
 
@@ -61,6 +62,15 @@ class MSMSFinder:
                         callback(spectra, file_name)
             else:
                 callback(spectra, file_name)
+
+        for spectra in tqdm(reader, total=reader.get_spectrum_count(),
+                            unit='spectra',
+                            unit_scale=True, leave=True, desc=f"analyzing spectra in {file_name}"):
+            spectra: Spectrum = spectra
+            spectra.estimatedNoiseLevel()
+            spectra.remove_noise()
+
+            evaluate(spectra)
 
     def download_rawdata(self, source, dir: str = "data"):
         """
