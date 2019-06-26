@@ -20,7 +20,7 @@ class BinBaseLoader:
         :param user:
         :param password:
         """
-        db = config.config(filename=config_file, section="postgres")
+        db = config.config(filename=config_file, section="binbase")
 
         self.connection = psycopg2.connect(**db)
 
