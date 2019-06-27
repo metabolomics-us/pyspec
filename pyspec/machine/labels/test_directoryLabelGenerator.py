@@ -12,3 +12,5 @@ def test_generate_labels():
     result = generator.generate_dataframe("{}/{}".format(folder, dataset))
 
     print(result)
+
+    generator.to_csv("{}/{}".format(folder, dataset), "{}/{}/train.csv".format(folder, dataset))

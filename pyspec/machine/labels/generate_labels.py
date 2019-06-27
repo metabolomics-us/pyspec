@@ -39,6 +39,16 @@ class LabelGenerator:
 
         return DataFrame(data)
 
+    def to_csv(self, input: str, file_name: str):
+        """
+        reads all the images, and saves them as a CSV file
+        :param input: from where to load the data
+        :param file_name: name of the labeled datafile
+        :return:
+        """
+        result = self.generate_dataframe(input)
+        result.to_csv(file_name, encoding='utf-8', index=False)
+
 
 class DirectoryLabelGenerator(LabelGenerator):
     """
