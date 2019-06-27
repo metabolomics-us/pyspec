@@ -1,3 +1,4 @@
+import csv
 import os
 from abc import abstractmethod
 
@@ -74,3 +75,40 @@ class DirectoryLabelGenerator(LabelGenerator):
         for category in os.listdir(data):
             for file in os.listdir("{}/{}".format(data, category)):
                 callback(file, category)
+
+
+class CSVLabelGenerator(LabelGenerator):
+    """
+    generates labels from a CSV file
+    """
+
+    def generate_labels(self, input: str, callback):
+        import os
+        assert os.path.exists(input), "please ensure that {} exists!".format(input)
+        assert os.path.isfile(input), "please ensure that {} is a file!".format(input)
+
+        with open(input, mode='r') as infile:
+            reader = csv.reader(infile)
+
+            # first row is headers
+
+            row = next(reader)
+
+            assert len(row) == 2, "please ensure you have exactly 2 columes!"
+
+            if row[0] == self.field_category:
+                c = 0
+                f = 1
+            elif row[1] == self.field_category:
+                c = 1
+                f = 0
+            else:
+                assert False, "please ensure that your column names are {} and {} instead of {}".format(
+                    self.field_category, self.field_id, row)
+
+            for row in reader:
+                callback(row[f], row[c])
+
+    def __init__(self, field_id: str = "file", field_category: str = "class"):
+        self.field_id = field_id
+        self.field_category = field_category
