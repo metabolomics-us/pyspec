@@ -12,3 +12,6 @@ seaborn
 git+git://github.com/berlinguyinca/spectra-hash.git@#egg=splash&subdirectory=python
 peewee
 joblib
+sklearn
+pillow
+tensorflow-gpu

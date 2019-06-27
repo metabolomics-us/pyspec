@@ -21,9 +21,17 @@ class LabelGenerator:
         :return:
         """
 
-    def generate_dataframe(self, input) -> DataFrame:
+    @abstractmethod
+    def generate_test_dataframe(self, input: str) -> DataFrame:
         """
-        generates a dataframe for the given input with all the internal labels
+        generates a test dataframe for us
+        :param input:
+        :return:
+        """
+
+    def generate_dataframe(self, input: str) -> DataFrame:
+        """
+        generates a dataframe for the given input with all the internal labels. This will be used for training and validation
         :param input:
         :return:
         """
@@ -69,12 +77,24 @@ class DirectoryLabelGenerator(LabelGenerator):
 
     """
 
+    def generate_test_dataframe(self, input: str) -> DataFrame:
+        data = "{}/test".format(input)
+        result = []
+
+        for category in os.listdir(data):
+            for file in os.listdir("{}/{}".format(data, category)):
+                result.append({
+                    "file": "test/{}/{}".format(category, file),
+                })
+
+        return DataFrame(result)
+
     def generate_labels(self, input: str, callback):
         data = "{}/train".format(input)
 
         for category in os.listdir(data):
             for file in os.listdir("{}/{}".format(data, category)):
-                callback(file, category)
+                callback("train/{}/{}".format(category, file), category)
 
 
 class CSVLabelGenerator(LabelGenerator):
