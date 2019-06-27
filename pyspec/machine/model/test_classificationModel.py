@@ -1,13 +1,15 @@
-from unittest import TestCase
-
+import numpy as np
 from keras_preprocessing.image import ImageDataGenerator
 
 from pyspec.machine.labels.generate_labels import DirectoryLabelGenerator
 from pyspec.machine.model.cnn import ClassificationModel
-import numpy as np
 
 
 def test_train():
+    """
+    tests the training, which also generates a model file, whihc is later used for other tests.
+    :return:
+    """
     model = ClassificationModel(width=500, height=500, channels=3, plots=True, batch_size=15)
     generator = DirectoryLabelGenerator()
 
