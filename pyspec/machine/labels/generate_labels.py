@@ -22,7 +22,7 @@ class LabelGenerator:
         """
 
     @abstractmethod
-    def generate_test_dataframe(self, input: str) -> DataFrame:
+    def generate_test_dataframe(self, input: str, abs: bool = False) -> DataFrame:
         """
         generates a test dataframe for us
         :param input:
@@ -77,15 +77,22 @@ class DirectoryLabelGenerator(LabelGenerator):
 
     """
 
-    def generate_test_dataframe(self, input: str) -> DataFrame:
+    def generate_test_dataframe(self, input: str, abs: bool = False) -> DataFrame:
         data = "{}/test".format(input)
         result = []
 
         for category in os.listdir(data):
             for file in os.listdir("{}/{}".format(data, category)):
-                result.append({
-                    "file": "test/{}/{}".format(category, file),
-                })
+
+                if not abs:
+                    result.append({
+                        "file": "test/{}/{}".format(category, file),
+                    })
+                else:
+                    result.append({
+                        "file": os.path.abspath("{}/{}/{}".format(data,category, file)),
+                    })
+
 
         return DataFrame(result)
 

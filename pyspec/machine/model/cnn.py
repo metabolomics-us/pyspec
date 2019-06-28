@@ -1,3 +1,8 @@
+import os
+
+from pandas import DataFrame
+from typing import Tuple, List
+
 from keras import Model
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation, BatchNormalization
@@ -8,6 +13,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+from pyspec.loader import Spectra
 from pyspec.machine.labels.generate_labels import LabelGenerator
 
 
@@ -132,6 +138,7 @@ class ClassificationModel:
         if self.plots:
             self.plot_training(epochs, history)
 
+        model.save_weights("{}/model.h5".format(input))
         return model
 
     def plot_training(self, epochs, history):
@@ -153,10 +160,106 @@ class ClassificationModel:
         plt.tight_layout()
         plt.show()
 
-    def predict(self, image) -> str:
+    def predict_from_dataframe(self, input: str, dataframe: DataFrame, file_column: str = "file",
+                               class_column: str = "class") -> DataFrame:
         """
-        this predicts the class of the given image for us
-        :param image:
+        predicts from an incomming dataframe and a specified colum and returns
+        a dataframe with the predictions
+        :param input: folder where the trained model is located
+        :param dataframe:
+        :param file_column:
         :return:
         """
-        pass
+        m = self.build()
+        m.load_weights("{}/model.h5".format(input))
+
+        test_gen = ImageDataGenerator()
+
+        nb_samples = dataframe.shape[0]
+        test_generator = test_gen.flow_from_dataframe(
+            dataframe,
+            directory=None,
+            x_col=file_column,
+            y_col=None,
+            class_mode=None,
+            target_size=(self.width, self.height),
+            batch_size=self.batch_size,
+            shuffle=False
+        )
+
+        predict = m.predict_generator(test_generator, steps=np.ceil(nb_samples / self.batch_size))
+
+        assert len(predict) > 0, "sorry we were not able to predict anything!"
+        dataframe[class_column] = np.argmax(predict, axis=-1)
+
+        if self.plots:
+            dataframe[class_column].value_counts().plot.bar()
+            plt.show()
+
+        return dataframe
+
+    def predict_from_files(self, input: str, files: List[str]) -> List[Tuple[str, str]]:
+        """
+        predicts from a list of files and returns a list of tuples
+        :param input: folder where the model is located
+        :param files: list of absolute file names you would like to load and predict
+
+        :return:
+        """
+        data = []
+        for x in files:
+            data.append(
+                {
+                    'file': os.path.abspath(x)
+                }
+            )
+
+        dataframe = self.predict_from_dataframe(input=input, dataframe=DataFrame(data))
+        return list(
+            dataframe.itertuples(index=False, name=None)
+        )
+
+    def predict_from_file(self, input: str, file: str) -> Tuple[str, str]:
+        """
+
+        this does the prediction based on the given file for us
+        :param input: the location where the model is located as directory
+        :param file: the file name you want to test
+        :return:
+        """
+
+        return self.predict_from_files(input, [file])[0]
+
+    def predict_from_directory(self, input: str, dict: str, callback):
+        """
+        predicts from a dictionary
+        :param input:
+        :param dict:
+        :param callback:
+        :return:
+        """
+        m = self.build()
+        m.load_weights("{}/model.h5".format(input))
+
+        test_gen = ImageDataGenerator()
+
+        for file in os.listdir(dict):
+            f = os.path.abspath("{}/{}".format(dict, file))
+            if os.path.isfile(f):
+                dataframe = DataFrame([{'file': f}])
+
+                nb_samples = dataframe.shape[0]
+                test_generator = test_gen.flow_from_dataframe(
+                    dataframe,
+                    directory=None,
+                    x_col="file",
+                    y_col=None,
+                    class_mode=None,
+                    target_size=(self.width, self.height),
+                    batch_size=self.batch_size,
+                    shuffle=False
+                )
+
+                predict = m.predict_generator(test_generator, steps=np.ceil(nb_samples / self.batch_size))
+                cat = np.argmax(predict, axis=-1)[0]
+                callback(file, cat)
