@@ -1,23 +1,20 @@
 import os
-
-from pandas import DataFrame
-from typing import Tuple, List
-
-from keras import Model
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation, BatchNormalization
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from keras_preprocessing.image import ImageDataGenerator
-from sklearn.model_selection import train_test_split
-import numpy as np
+from abc import ABC, abstractmethod
 
 import matplotlib.pyplot as plt
+import numpy as np
+from keras import Model
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
-from pyspec.loader import Spectra
+from keras_preprocessing.image import ImageDataGenerator
+from pandas import DataFrame
+from sklearn.model_selection import train_test_split
+from typing import Tuple, List
+
 from pyspec.machine.labels.generate_labels import LabelGenerator
 
 
-class ClassificationModel:
+class CNNClassificationModel(ABC):
     """
     provides us with a simple classification model
     """
@@ -35,41 +32,14 @@ class ClassificationModel:
         self.channels = channels
         self.plots = plots
         self.batch_size = batch_size
+        self.seed = np.random.seed()
 
+    @abstractmethod
     def build(self) -> Model:
         """
         builds the internal keras model
         :return:
         """
-
-        model = Sequential()
-
-        model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(self.width, self.height, self.channels)))
-        model.add(BatchNormalization())
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
-
-        model.add(Conv2D(64, (3, 3), activation='relu'))
-        model.add(BatchNormalization())
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
-
-        model.add(Conv2D(128, (3, 3), activation='relu'))
-        model.add(BatchNormalization())
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
-
-        model.add(Flatten())
-        model.add(Dense(512, activation='relu'))
-        model.add(BatchNormalization())
-        model.add(Dropout(0.5))
-        model.add(Dense(2, activation='softmax'))  # 2 because we have cat and dog classes
-
-        model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-
-        model.summary()
-
-        return model
 
     def train(self, input: str, generator: LabelGenerator, test_size=0.20, epochs=5) -> Model:
         """
@@ -93,9 +63,11 @@ class ClassificationModel:
 
         if self.plots:
             train_df['class'].value_counts().plot.bar()
+            plt.title("training classes {}".format(self.get_name()))
             plt.show()
 
             validate_df['class'].value_counts().plot.bar()
+            plt.title("validations classes {}".format(self.get_name()))
             plt.show()
 
         total_train = train_df.shape[0]
@@ -138,7 +110,7 @@ class ClassificationModel:
         if self.plots:
             self.plot_training(epochs, history)
 
-        model.save_weights("{}/model.h5".format(input))
+        model.save_weights("{}/{}_model.h5".format(input, self.get_name()))
         return model
 
     def plot_training(self, epochs, history):
@@ -158,6 +130,8 @@ class ClassificationModel:
         ax2.set_xticks(np.arange(1, epochs, 1))
         legend = plt.legend(loc='best', shadow=True)
         plt.tight_layout()
+
+        plt.title("training report {}".format(self.get_name()))
         plt.show()
 
     def predict_from_dataframe(self, input: str, dataframe: DataFrame, file_column: str = "file",
@@ -171,7 +145,7 @@ class ClassificationModel:
         :return:
         """
         m = self.build()
-        m.load_weights("{}/model.h5".format(input))
+        m.load_weights("{}/{}_model.h5".format(input, self.get_name()))
 
         test_gen = ImageDataGenerator()
 
@@ -263,3 +237,10 @@ class ClassificationModel:
                 predict = m.predict_generator(test_generator, steps=np.ceil(nb_samples / self.batch_size))
                 cat = np.argmax(predict, axis=-1)[0]
                 callback(file, cat)
+
+    def get_name(self) -> str:
+        """
+        returns the name of this model, by default this is the concrete class name
+        :return:
+        """
+        return self.__class__.__name__

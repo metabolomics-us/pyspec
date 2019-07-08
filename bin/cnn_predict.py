@@ -5,13 +5,13 @@ from shutil import copyfile
 import matplotlib.pyplot as plt
 
 batchsize = 2
-from pyspec.machine.model.cnn import ClassificationModel
+from pyspec.machine.model.cnn import CNNClassificationModel
 import os
 
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-model = ClassificationModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize)
+model = CNNClassificationModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize)
 
 
 def callback(file, classname):
