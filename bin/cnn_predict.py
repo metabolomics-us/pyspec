@@ -4,6 +4,8 @@ from shutil import copyfile
 
 import matplotlib.pyplot as plt
 
+from pyspec.machine.model.simple_cnn import PoolingCNNModel
+
 batchsize = 2
 from pyspec.machine.model.cnn import CNNClassificationModel
 import os
@@ -11,24 +13,17 @@ import os
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-model = CNNClassificationModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize)
+model = PoolingCNNModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize)
 
 
 def callback(file, classname):
-    ##  print("{}:{}".format(file, classname))
-    ##  plt.figure(figsize=(6, 6))
-    ##  img = load_img("{}/{}".format("datasets/clean_dirty_full/test", file), target_size=(500, 500))
-    ##  plt.imshow(img)
-    ##  plt.title(file + '\n(' + "{}".format(classname) + ')')
-    ##  plt.show()
-
     if classname == 0:
         classname = "clean"
     else:
         classname = "dirty"
 
-    if not os.path.exists("{}/{}".format("datasets/clean_dirty_full/sorted", classname)):
-        os.mkdir("{}/{}".format("datasets/clean_dirty_full/sorted", classname))
+    print("{} is {}".format(file, classname))
+    os.makedirs("{}/{}".format("datasets/clean_dirty_full/sorted", classname), exist_ok=True)
     copyfile("{}/{}".format("datasets/clean_dirty_full/test", file),
              "{}/{}/{}".format("datasets/clean_dirty_full/sorted", classname, file))
 

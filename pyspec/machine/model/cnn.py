@@ -213,7 +213,7 @@ class CNNClassificationModel(ABC):
         :return:
         """
         m = self.build()
-        m.load_weights("{}/model.h5".format(input))
+        m.load_weights("{}/{}_model.h5".format(input, self.get_name()))
 
         test_gen = ImageDataGenerator()
 

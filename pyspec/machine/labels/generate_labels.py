@@ -90,9 +90,8 @@ class DirectoryLabelGenerator(LabelGenerator):
                     })
                 else:
                     result.append({
-                        "file": os.path.abspath("{}/{}/{}".format(data,category, file)),
+                        "file": os.path.abspath("{}/{}/{}".format(data, category, file)),
                     })
-
 
         return DataFrame(result)
 
@@ -109,9 +108,31 @@ class CSVLabelGenerator(LabelGenerator):
     generates labels from a CSV file
     """
 
+    def generate_test_dataframe(self, input: str, abs: bool = False) -> DataFrame:
+        import os
+        assert os.path.exists(input), "please ensure that {} exists!".format(input)
+        input = os.path.join(input, "test.csv")
+        assert os.path.isfile(input), "please ensure that {} is a file!".format(input)
+
+        with open(input, mode='r') as infile:
+            reader = csv.reader(infile)
+
+            # first row is headers
+
+            row = next(reader)
+
+            data = []
+            assert len(row) == 1, "please ensure you have exactly 1 column!"
+            for row in reader:
+                if len(row) == 1:
+                    data.append({'file': row})
+
+            return DataFrame(data)
+
     def generate_labels(self, input: str, callback):
         import os
         assert os.path.exists(input), "please ensure that {} exists!".format(input)
+        input = os.path.join(input, "train.csv")
         assert os.path.isfile(input), "please ensure that {} is a file!".format(input)
 
         with open(input, mode='r') as infile:
