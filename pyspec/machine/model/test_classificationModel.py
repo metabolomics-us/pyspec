@@ -1,15 +1,16 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import pytest
-from keras_preprocessing.image import ImageDataGenerator, load_img
 
 from pyspec.machine.labels.generate_labels import DirectoryLabelGenerator
+from pyspec.machine.model.Xception import XceptionModel
+from pyspec.machine.model.resnet50 import Resnet50CNNModel
 from pyspec.machine.model.simple_cnn import SimpleCNNModel, PoolingCNNModel
 
 batchsize = 2
 epochs = 50
 
 models = [
+    XceptionModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize),
+    Resnet50CNNModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize),
     PoolingCNNModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize),
     SimpleCNNModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize)
 ]
