@@ -35,77 +35,82 @@ class Encoder:
 
     def encode(self, spec: Spectra):
         # dumb approach to find max mz
-        print("spec: {}".format(spec.spectra))
         data = []
 
         pairs = spec.spectra.split(" ")
 
         # convert spectra to arrays
         for pair in pairs:
-            mass, intensity = pair.split(":")
+            try:
+                mass, intensity = pair.split(":")
 
-            frac, whole = math.modf(float(mass))
+                frac, whole = math.modf(float(mass))
 
-            data.append(
-                {
-                    "intensity": float(intensity),
-                    "mz": float(mass),
-                    "nominal": int(whole),
-                    "frac": round(float(frac), 4)
-                }
-            )
+                data.append(
+                    {
+                        "intensity": float(intensity),
+                        "mz": float(mass),
+                        "nominal": int(whole),
+                        "frac": round(float(frac), 4)
+                    }
+                )
+            except ValueError:
+                pass
 
-        dataframe = pd.DataFrame(data, columns=["intensity", "mz", "nominal", "frac"])
+        try:
+            dataframe = pd.DataFrame(data, columns=["intensity", "mz", "nominal", "frac"])
 
-        # group by 5 digits
-        dataframe = dataframe.groupby(dataframe['mz'].apply(lambda x: round(x, 5))).sum()
+            # group by 5 digits
+            dataframe = dataframe.groupby(dataframe['mz'].apply(lambda x: round(x, 5))).sum()
 
-        # drop data outside min and max
-        dataframe = dataframe[(dataframe['nominal'] >= self.min_mz) & (dataframe['nominal'] <= self.max_mz)]
+            # drop data outside min and max
+            dataframe = dataframe[(dataframe['nominal'] >= self.min_mz) & (dataframe['nominal'] <= self.max_mz)]
 
-        dataframe['intensity_min_max'] = (dataframe['intensity'] - dataframe['intensity'].min()) / (
-                dataframe['intensity'].max() - dataframe['intensity'].min())
+            dataframe['intensity_min_max'] = (dataframe['intensity'] - dataframe['intensity'].min()) / (
+                    dataframe['intensity'].max() - dataframe['intensity'].min())
 
-        # formatting
-        fig = plt.figure(
-            figsize=(self.height / self.dpi, self.width / self.dpi))
+            # formatting
+            fig = plt.figure(
+                figsize=(self.height / self.dpi, self.width / self.dpi))
 
-        widths = [1]
-        heights = [16, 16, 1]
-        specs = fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
+            widths = [1]
+            heights = [16, 16, 1]
+            specs = fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
 
-        ax0 = plt.subplot(specs[0, 0])
-        ax1 = plt.subplot(specs[1, 0])
-        ax2 = plt.subplot(specs[2, 0])
+            ax0 = plt.subplot(specs[0, 0])
+            ax1 = plt.subplot(specs[1, 0])
+            ax2 = plt.subplot(specs[2, 0])
 
-        ax0.scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=1)
-        ax0.set_xlim(self.min_mz, self.max_mz)
-        ax0.set_ylim(0, 1)
+            ax0.scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=1)
+            ax0.set_xlim(self.min_mz, self.max_mz)
+            ax0.set_ylim(0, 1)
 
-        ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black',
-                 use_line_collection=True)
-        ax1.set_xlim(self.min_mz, self.max_mz)
-        ax1.set_ylim(0, 1)
-        ax1.spines['top'].set_visible(False)
-        ax1.spines['right'].set_visible(False)
+            ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black',
+                     use_line_collection=True)
+            ax1.set_xlim(self.min_mz, self.max_mz)
+            ax1.set_ylim(0, 1)
+            ax1.spines['top'].set_visible(False)
+            ax1.spines['right'].set_visible(False)
 
-        ax2.barh("intensity", dataframe['intensity'].max(), align='center', color='black')
-        ax2.set_xlim(0, self.intensity_max)
+            ax2.barh("intensity", dataframe['intensity'].max(), align='center', color='black')
+            ax2.set_xlim(0, self.intensity_max)
 
-        if not self.axis:
-            ax0.axis('off')
-            ax1.axis('off')
-            ax2.axis('off')
+            if not self.axis:
+                ax0.axis('off')
+                ax1.axis('off')
+                ax2.axis('off')
 
-        plt.tight_layout()
-        #        plt.show()
+            plt.tight_layout()
+            #        plt.show()
 
-        if self.directory is not None:
-            name = Splash().splash(Spectrum(spec.spectra, SpectrumType.MS))
-            plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
-            plt.savefig("{}/{}.png".format(self.directory, name), dpi=self.dpi)
-            plt.close(fig=fig)
-        return plt
+            if self.directory is not None:
+                name = Splash().splash(Spectrum(spec.spectra, SpectrumType.MS))
+                plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+                plt.savefig("{}/{}.png".format(self.directory, name), dpi=self.dpi)
+                plt.close(fig=fig)
+            return plt
+        except ValueError:
+            pass
 
     def encodes(self, spectra: List[Spectra]):
         """
