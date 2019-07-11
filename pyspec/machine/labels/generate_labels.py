@@ -1,6 +1,7 @@
 import csv
 import os
 from abc import abstractmethod
+from glob import iglob
 
 from pandas import DataFrame
 
@@ -82,15 +83,15 @@ class DirectoryLabelGenerator(LabelGenerator):
         result = []
 
         for category in os.listdir(data):
-            for file in os.listdir("{}/{}".format(data, category)):
+            for file in iglob("{}/{}/**/*.png".format(data, category), recursive=True):
 
                 if not abs:
                     result.append({
-                        "file": "test/{}/{}".format(category, file),
+                        "file": file,
                     })
                 else:
                     result.append({
-                        "file": os.path.abspath("{}/{}/{}".format(data, category, file)),
+                        "file": os.path.abspath(file),
                     })
 
         return DataFrame(result)
@@ -99,8 +100,8 @@ class DirectoryLabelGenerator(LabelGenerator):
         data = "{}/train".format(input)
 
         for category in os.listdir(data):
-            for file in os.listdir("{}/{}".format(data, category)):
-                callback("train/{}/{}".format(category, file), category)
+            for file in iglob("{}/{}/**/*.png".format(data, category), recursive=True):
+                callback(file, category)
 
 
 class CSVLabelGenerator(LabelGenerator):
@@ -111,10 +112,10 @@ class CSVLabelGenerator(LabelGenerator):
     def generate_test_dataframe(self, input: str, abs: bool = False) -> DataFrame:
         import os
         assert os.path.exists(input), "please ensure that {} exists!".format(input)
-        input = os.path.join(input, "test.csv")
-        assert os.path.isfile(input), "please ensure that {} is a file!".format(input)
+        csv_file = os.path.join(input, "test.csv")
+        assert os.path.isfile(csv_file), "please ensure that {} is a file!".format(csv_file)
 
-        with open(input, mode='r') as infile:
+        with open(csv_file, mode='r') as infile:
             reader = csv.reader(infile)
 
             # first row is headers
@@ -125,7 +126,12 @@ class CSVLabelGenerator(LabelGenerator):
             assert len(row) == 1, "please ensure you have exactly 1 column!"
             for row in reader:
                 if len(row) == 1:
-                    data.append({'file': row})
+                    if os.path.exists(row[0]):
+                        data.append({'file': row[0]})
+                    elif os.path.exists("{}/{}".format(input, row[0])):
+                        data.append({'file': "{}/{}".format(input,row[0])})
+                    else:
+                        raise Exception("sorry we did not find the file: {} or {}/{}".format(row[0], input, row[0]))
 
             return DataFrame(data)
 

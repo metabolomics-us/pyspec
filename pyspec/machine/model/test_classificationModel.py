@@ -14,27 +14,27 @@ models = [
     PoolingCNNModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize),
     SimpleCNNModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize)
 ]
+datasets = ['clean_dirty', 'pos_neg']
 
 
 @pytest.mark.parametrize("model", models)
-def test_train(model):
+@pytest.mark.parametrize("dataset", datasets)
+def test_train(model, dataset):
     """
     tests the training, which also generates a model file, whihc is later used for other tests.
     :return:
     """
 
     generator = DirectoryLabelGenerator()
-
-    test_df = generator.generate_test_dataframe("datasets/clean_dirty")
-
-    m = model.train("datasets/clean_dirty", generator, epochs=epochs)
+    model.train(input="datasets/{}".format(dataset), generator=generator, epochs=epochs)
 
 
+@pytest.mark.parametrize("dataset", datasets)
 @pytest.mark.parametrize("model", models)
-def test_predict_from_dataframe(model):
+def test_predict_from_dataframe(model, dataset):
     generator = DirectoryLabelGenerator()
-    test_df = generator.generate_test_dataframe("datasets/clean_dirty", abs=True)
-    result = model.predict_from_dataframe(dataframe=test_df, input="datasets/clean_dirty")
+    test_df = generator.generate_test_dataframe("datasets/{}".format(dataset), abs=True)
+    result = model.predict_from_dataframe(dataframe=test_df, input="datasets/{}".format(dataset))
     print(result)
 
 

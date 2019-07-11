@@ -4,6 +4,7 @@ from shutil import copyfile
 
 import matplotlib.pyplot as plt
 
+from pyspec.machine.model.Xception import XceptionModel
 from pyspec.machine.model.simple_cnn import PoolingCNNModel, SimpleCNNModel
 
 batchsize = 2
@@ -13,7 +14,7 @@ import os
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-model = SimpleCNNModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize)
+model = XceptionModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize)
 
 
 def callback(file, classname):

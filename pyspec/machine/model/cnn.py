@@ -57,6 +57,8 @@ class CNNClassificationModel(ABC):
 
         dataframe = generator.generate_dataframe(input)
 
+        assert dataframe['file'].apply(lambda x: os.path.exists(x)).all(), 'please ensure all files exist!'
+
         train_df, validate_df = train_test_split(dataframe, test_size=test_size, random_state=42)
         train_df = train_df.reset_index(drop=True)
         validate_df = validate_df.reset_index(drop=True)
@@ -77,7 +79,7 @@ class CNNClassificationModel(ABC):
 
         train_generator = train_datagen.flow_from_dataframe(
             train_df,
-            input,
+            None,
             x_col='file',
             y_col='class',
             target_size=(self.width, self.height),
@@ -88,7 +90,7 @@ class CNNClassificationModel(ABC):
         validation_datagen = ImageDataGenerator()
         validation_generator = validation_datagen.flow_from_dataframe(
             validate_df,
-            input,
+            None,
             x_col='file',
             y_col='class',
             target_size=(self.width, self.height),
@@ -102,8 +104,8 @@ class CNNClassificationModel(ABC):
             train_generator,
             epochs=epochs,
             validation_data=validation_generator,
-            validation_steps=total_validate // self.batch_size,
-            steps_per_epoch=total_train // self.batch_size,
+            validation_steps=total_validate / self.batch_size,
+            steps_per_epoch=total_train / self.batch_size,
             callbacks=callbacks
         )
 
