@@ -7,6 +7,7 @@ import math
 import pandas as pd
 from pyspec.loader import Spectra
 
+import pathlib
 from splash import Spectrum, SpectrumType, Splash
 
 
@@ -29,11 +30,24 @@ class Encoder:
         self.dpi = dpi
         self.directory = directory
 
+    @property
+    def directory(self):
+        return self.__directory
+
+    @directory.setter
+    def directory(self, directory):
+        self.__directory = directory
+
         if self.directory is not None:
-            import pathlib
             pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
 
-    def encode(self, spec: Spectra):
+    def encode(self, spec: Spectra, prefix: str = None):
+        """
+        encodes the given spectra
+        :param spec: spectra
+        :param prefix: prefix
+        :return:
+        """
         # dumb approach to find max mz
         data = []
 
@@ -106,8 +120,13 @@ class Encoder:
             if self.directory is not None:
                 name = Splash().splash(Spectrum(spec.spectra, SpectrumType.MS))
                 plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
-                plt.savefig("{}/{}.png".format(self.directory, name), dpi=self.dpi)
+
+                directory = self.directory if prefix is None else "{}/{}".format(self.directory, prefix)
+                pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
+                plt.savefig("{}/{}.png".format(directory, name), dpi=self.dpi)
+
                 plt.close(fig=fig)
+                return None
             return plt
         except ValueError:
             pass

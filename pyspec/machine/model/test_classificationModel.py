@@ -26,7 +26,10 @@ def test_train(model, dataset):
     """
 
     generator = DirectoryLabelGenerator()
-    model.train(input="datasets/{}".format(dataset), generator=generator, epochs=epochs)
+    try:
+        result = model.train(input="datasets/{}".format(dataset), generator=generator, epochs=epochs)
+    finally:
+        del model
 
 
 @pytest.mark.parametrize("dataset", datasets)

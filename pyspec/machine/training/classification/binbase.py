@@ -1,5 +1,6 @@
 from typing import List
 
+from pyspec.loader import Spectra
 from pyspec.loader.binbase import BinBaseLoader
 from pyspec.machine.spectra import Encoder
 from pyspec.machine.training.classification.classifier import Classifier
@@ -48,10 +49,13 @@ class BinBaseBinClassifier(Classifier):
 
             while row is not None:
                 # 5. generate folder name based on InChI Key
-                print(row)
+                sample_id, sample_name, inchi_key, name, spectra = row
+
+                self.encoder.encode(Spectra(
+                    name=name,
+                    spectra=spectra
+                ), prefix="{}/{}".format(inchi_key, sample_name))
+
                 row = cursor.fetchone()
             # 6. generate sub folders, based on sample_name/spectra/splash.png
             cursor.close()
-            pass
-
-        pass
