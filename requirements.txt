@@ -15,3 +15,4 @@ joblib
 sklearn
 pillow
 tensorflow-gpu
+numba

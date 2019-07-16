@@ -4,9 +4,7 @@ from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import Model
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
-from keras_preprocessing.image import ImageDataGenerator
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from typing import Tuple, List
@@ -18,6 +16,9 @@ class CNNClassificationModel(ABC):
     """
     provides us with a simple classification model
     """
+
+    def __str__(self) -> str:
+        return self.__class__.__name__
 
     def __init__(self, width: int, height: int, channels: int, plots: bool = False, batch_size=15):
         """
@@ -41,12 +42,15 @@ class CNNClassificationModel(ABC):
         :return:
         """
 
-    def train(self, input: str, generator: LabelGenerator, test_size=0.20, epochs=5) -> Model:
+    def train(self, input: str, generator: LabelGenerator, test_size=0.20, epochs=5):
         """
         trains a model for us, based on the input
         :param input:
         :return:
         """
+        from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+        from keras_preprocessing.image import ImageDataGenerator
+
         earlystop = EarlyStopping(patience=10)
         learning_rate_reduction = ReduceLROnPlateau(monitor='val_acc',
                                                     patience=2,
@@ -113,7 +117,10 @@ class CNNClassificationModel(ABC):
             self.plot_training(epochs, history)
 
         model.save_weights("{}/{}_model.h5".format(input, self.get_name()))
-        return model
+        model = None
+
+        from keras import backend as K
+        K.clear_session()
 
     def plot_training(self, epochs, history):
         """
@@ -149,6 +156,7 @@ class CNNClassificationModel(ABC):
         m = self.build()
         m.load_weights("{}/{}_model.h5".format(input, self.get_name()))
 
+        from keras_preprocessing.image import ImageDataGenerator
         test_gen = ImageDataGenerator()
 
         nb_samples = dataframe.shape[0]
@@ -217,6 +225,7 @@ class CNNClassificationModel(ABC):
         m = self.build()
         m.load_weights("{}/{}_model.h5".format(input, self.get_name()))
 
+        from keras_preprocessing.image import ImageDataGenerator
         test_gen = ImageDataGenerator()
 
         for file in os.listdir(dict):
