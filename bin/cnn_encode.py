@@ -19,7 +19,8 @@ parser = argparse.ArgumentParser(description="encode rawdata to image files")
 parser.add_argument("--rawdata", help="directory containing your rawdata", required=True, type=str)
 parser.add_argument("--destination", help="directory where you want to store the data", required=True, type=str)
 parser.add_argument("--group", action="store", help="do you want to group the encoded images by filename", default=True)
-parser.add_argument("--dimension", help="the size of the image to be generated", default=500)
+parser.add_argument("--txt", action="store", help="do you want to store TXT data as well", default=True)
+parser.add_argument("--dimension", help="the size of the image to be generated", default=512)
 parser.add_argument("--min_mz", help="the minimum mass", default=0, type=int)
 parser.add_argument("--max_mz", help="the maximum mass", default=2000, type=int)
 parser.add_argument("--max_intensity", help="the maximum mass", default=10000, type=int)
@@ -63,7 +64,8 @@ for file in iglob(expression, recursive=True):
         if len(data) > 0:
             from joblib import Parallel, delayed
 
-            Parallel(n_jobs=multiprocessing.cpu_count())(delayed(encoder.encode)(x) for x in data)
+            Parallel(n_jobs=multiprocessing.cpu_count())(
+                delayed(encoder.encode)(spec=x, store_string=args.txt) for x in data)
     except ParseError:
         print("ignoring file: {}, due to format errors!".format(file))
 

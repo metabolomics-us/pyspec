@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from typing import List, Optional
 
 import matplotlib.pyplot as plt
@@ -13,7 +15,8 @@ from splash import Spectrum, SpectrumType, Splash
 
 class Encoder:
     """
-    class to easily encode spectra into a graphical form, to be used for machine learning
+    class to easily encode spectra into a graphical form, to be used for machine learning. The encoded spectra can be automaticall
+    persited to a directory, if it has been provided
     """
 
     def __init__(self, width=512, height=512, min_mz=0, max_mz=2000, plot_axis=False, intensity_max=1000, dpi=72,
@@ -41,12 +44,23 @@ class Encoder:
         if self.directory is not None:
             pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
 
-    def encode(self, spec: Spectra, prefix: str = None):
+    def encode(self, spec: Spectra, prefix: str = None, store_string: bool = False) -> str:
+        """
+        encodes a spectra to a string in graphical form
+        :param spec:
+        :param prefix:
+        :param store_string:
+        :return:
+        """
+        return self._encode(spec, prefix, store_string)
+
+    def _encode(self, spec: Spectra, prefix: str = None, store_string: bool = False):
         """
         encodes the given spectra
         :param spec: spectra
         :param prefix: prefix
-        :return:
+        :param store_string: do you also want to store the spectra string for each spectra?
+        :return: an image representation of the encoded spectra in form of a string
         """
         # dumb approach to find max mz
         data = []
@@ -85,7 +99,7 @@ class Encoder:
 
             # formatting
             fig = plt.figure(
-                figsize=(self.height / self.dpi, self.width / self.dpi))
+                figsize=(self.height / self.dpi, self.width / self.dpi), dpi=self.dpi)
 
             widths = [1]
             heights = [16, 16, 1]
@@ -116,6 +130,11 @@ class Encoder:
 
             plt.tight_layout()
             #        plt.show()
+            fig.canvas.draw()
+            size = fig.get_size_inches() * fig.dpi
+            print("figure size: {}".format(size))
+
+            spectra_string = fig.canvas.tostring_rgb()
 
             if self.directory is not None:
                 name = Splash().splash(Spectrum(spec.spectra, SpectrumType.MS))
@@ -126,8 +145,13 @@ class Encoder:
                 plt.savefig("{}/{}.png".format(directory, name), dpi=self.dpi)
 
                 plt.close(fig=fig)
+
+                if store_string:
+                    with open("{}/{}.txt".format(directory, name), 'w') as the_file:
+                        the_file.write(spec.spectra)
                 return None
-            return plt
+
+            return spectra_string
         except ValueError:
             pass
 
@@ -145,3 +169,9 @@ class Encoder:
 
         for spec in spectra:
             plt = self.encode(spec)
+
+
+class DualEncoder(Encoder):
+    """
+    this encoder encodes the data in form of 2 charts. 1 chart the actual spectra and the other a heatmap of accuracies
+    """

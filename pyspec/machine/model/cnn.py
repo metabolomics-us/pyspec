@@ -4,12 +4,13 @@ from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import Model
-
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from typing import Tuple, List
 
+from pyspec.loader import Spectra
 from pyspec.machine.labels.generate_labels import LabelGenerator
+from pyspec.machine.spectra import Encoder
 
 
 class CNNClassificationModel(ABC):
@@ -153,8 +154,7 @@ class CNNClassificationModel(ABC):
         :param file_column:
         :return:
         """
-        m = self.build()
-        m.load_weights("{}/{}_model.h5".format(input, self.get_name()))
+        m = self.get_model(input)
 
         from keras_preprocessing.image import ImageDataGenerator
         test_gen = ImageDataGenerator()
@@ -222,8 +222,7 @@ class CNNClassificationModel(ABC):
         :param callback:
         :return:
         """
-        m = self.build()
-        m.load_weights("{}/{}_model.h5".format(input, self.get_name()))
+        m = self.get_model(input)
 
         from keras_preprocessing.image import ImageDataGenerator
         test_gen = ImageDataGenerator()
@@ -249,7 +248,31 @@ class CNNClassificationModel(ABC):
                 cat = np.argmax(predict, axis=-1)[0]
                 callback(file, cat)
 
+    def get_model(self, input):
+        m = self.build()
+        m.load_weights("{}/{}_model.h5".format(input, self.get_name()))
+        return m
+
+    def predict_from_spectra(self, input: str, spectra: Spectra, encoder: Encoder) -> str:
+        """
+        predicts the class from the given spectra
+        :param spectra:
+        :return:
+        """
+        model = self.get_model(input)
+        spectra = encoder.encode(spectra)
+
+        # convert the incomming data to a numpy array wxhxc
+        data = np.fromstring(spectra, dtype='uint8').reshape((self.width, self.height, self.channels))
+        # expand it by 1 dimension
+        data = np.expand_dims(data, axis=0)
+
+        y_proba = model.predict(data, batch_size=self.batch_size)
+        y_classes = y_proba.argmax(axis=-1)
+        return y_classes[0]
+
     def get_name(self) -> str:
+
         """
         returns the name of this model, by default this is the concrete class name
         :return:
