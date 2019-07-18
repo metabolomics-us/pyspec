@@ -1,5 +1,4 @@
-from pyspec.msms_spectrum import MSMSSpectrum
-from pyspec.similarity.msdial_similarity import *
+from pyspec.parser.pymzl.msms_spectrum import MSMSSpectrum
 
 
 def test_msms_spectrum_similarity():
