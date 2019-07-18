@@ -33,7 +33,8 @@ setup(name='pyspec',
           "tqdm",
           "keras",
           "psycopg2-binary",
-          "pillow"
+          "pillow",
+          "tensorflow-gpu"
       ],
       include_package_data=True,
       zip_safe=False,
