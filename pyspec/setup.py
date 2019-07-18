@@ -14,7 +14,6 @@ setup(name='pyspec',
       license='GPLv3',
       packages=find_packages(),
       scripts=[
-          "bin/bv_to_msp.py"
       ],
       setup_requires=['pytest-runner'],
       tests_require=[
