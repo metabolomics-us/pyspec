@@ -23,7 +23,17 @@ setup(name='pyspec',
       install_requires=[
           "pandas",
           "requests",
-          "regex"
+          "regex",
+          "matplotlib",
+          "numba",
+          "sklearn",
+          "seaborn",
+          "joblib",
+          "peewee",
+          "tqdm",
+          "keras",
+          "psycopg2-binary",
+          "pillow"
       ],
       include_package_data=True,
       zip_safe=False,
