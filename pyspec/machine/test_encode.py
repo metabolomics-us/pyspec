@@ -20,29 +20,7 @@ def test_encode():
 
 sources = [
     "http://eclipse.fiehnlab.ucdavis.edu/D%3A/mzml/B1_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml",
-    # should download this file
     "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1_SA0002_TEDDYLipids_Pos_1GZR9_.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1_SA0003_TEDDYLipids_Pos_1AN1N_MSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1_SA0005_TEDDYLipids_Pos_1292V_MSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1_SA0006_TEDDYLipids_Pos_15GW2_MSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1_SA0007_TEDDYLipids_Pos_12VAU_MSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1_SA0008_TEDDYLipids_Pos_131SH_MSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1_SA0009_TEDDYLipids_Pos_24A2V_MSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1_SA0010_TEDDYLipids_Pos_24A2Y_MSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B2_SA596_TEDDYLipids_Neg_14F1H_40CEmsms.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B2_SA596_TEDDYLipids_Neg_14F1H_targeted40CEMSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B2_SA597_TEDDYLipids_Neg_1HXUL_40CEmsms.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B2_SA597_TEDDYLipids_Neg_1HXUL_targeted40CEMSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B2_SA598_TEDDYLipids_Neg_1GFRV_40CEmsms.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B2_SA598_TEDDYLipids_Neg_1GFRV_targeted40CEMSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B2_SA599_TEDDYLipids_Neg_1FZJ7_40CEmsms.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B2_SA599_TEDDYLipids_Neg_1FZJ7_targeted40CEMSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B2_SA600_TEDDYLipids_Neg_1HSA9_40CEmsms.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B2_SA600_TEDDYLipids_Neg_1HSA9_targeted40CEMSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/130318_CitratePlasma_Pos_1uL_CE40_MSMS_004.mzml"
-
-    # should download this file
-
 ]
 
 

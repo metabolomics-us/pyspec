@@ -14,17 +14,7 @@ epochs = 5
 models = [
     'XceptionModel',
     'Resnet50CNNModel',
-    'VGG16Model',
-    'VGG19Model',
-    'InceptionModel',
     'InceptionResNetModel',
-    'MobileNetModel',
-    'MobileNetV2Model',
-    'DenseNet121Model',
-    'DenseNet169Model',
-    'DenseNet201Model',
-    'NASNetMobileModel',
-    'NASNetLargeModel'
 ]
 datasets = ['clean_dirty']  # , 'pos_neg']
 

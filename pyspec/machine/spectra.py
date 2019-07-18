@@ -129,7 +129,6 @@ class Encoder:
             #        plt.show()
             fig.canvas.draw()
             size = fig.get_size_inches() * fig.dpi
-            print("figure size: {}".format(size))
 
             spectra_string = fig.canvas.tostring_rgb()
 
