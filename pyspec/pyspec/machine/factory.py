@@ -60,7 +60,7 @@ class MachineFactory:
             width=int(encoder_config.get("width")),
             height=int(encoder_config.get("height")),
             plots=True if model_config.get("plot") == 'true' else False,
-            batch_size=model_config['batch_size'],
+            batch_size=int(model_config['batch_size']),
             channels=3
         )
 
