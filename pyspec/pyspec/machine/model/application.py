@@ -14,9 +14,7 @@ class Resnet50CNNModel(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-        model.summary()
         return model
 
 
@@ -32,8 +30,6 @@ class XceptionModel(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -47,8 +43,6 @@ class VGG16Model(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -62,8 +56,6 @@ class VGG19Model(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -77,8 +69,6 @@ class InceptionModel(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -92,8 +82,6 @@ class InceptionResNetModel(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -107,8 +95,6 @@ class MobileNetModel(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -122,8 +108,6 @@ class MobileNetV2Model(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -137,8 +121,6 @@ class DenseNet121Model(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -152,8 +134,6 @@ class DenseNet169Model(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -167,8 +147,6 @@ class DenseNet201Model(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -182,8 +160,6 @@ class NASNetMobileModel(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model
 
@@ -197,7 +173,5 @@ class NASNetLargeModel(CNNClassificationModel):
             input_shape=(self.width, self.height, self.channels),
             classes=2
         )
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        model.summary()
 
         return model

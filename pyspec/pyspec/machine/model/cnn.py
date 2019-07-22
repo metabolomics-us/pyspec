@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import Model
+from keras.backend import set_session
+from keras.utils import multi_gpu_model
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from typing import Tuple, List
@@ -21,7 +23,7 @@ class CNNClassificationModel(ABC):
     def __str__(self) -> str:
         return self.__class__.__name__
 
-    def __init__(self, width: int, height: int, channels: int, plots: bool = False, batch_size=15):
+    def __init__(self, width: int, height: int, channels: int, plots: bool = False, batch_size=15, gpus=3, seed=12345):
         """
         defines the model size
         :param width:
@@ -35,6 +37,8 @@ class CNNClassificationModel(ABC):
         self.plots = plots
         self.batch_size = batch_size
         self.seed = np.random.seed()
+        self.gpus = gpus
+        self.seed = seed
 
     @abstractmethod
     def build(self) -> Model:
@@ -42,6 +46,20 @@ class CNNClassificationModel(ABC):
         builds the internal keras model
         :return:
         """
+
+    def configure_session(self):
+        """
+        configures the tensorflow session for us
+        :return:
+        """
+
+        import tensorflow as tf
+        from keras.backend.tensorflow_backend import set_session
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
+#        config.log_device_placement = True  # to log device placement (on which device the operation ran)
+        sess = tf.Session(config=config)
+        return sess
 
     def train(self, input: str, generator: LabelGenerator, test_size=0.20, epochs=5):
         """
@@ -89,7 +107,8 @@ class CNNClassificationModel(ABC):
             y_col='class',
             target_size=(self.width, self.height),
             class_mode='categorical',
-            batch_size=self.batch_size
+            batch_size=self.batch_size,
+            seed=self.seed
         )
 
         validation_datagen = ImageDataGenerator()
@@ -100,10 +119,22 @@ class CNNClassificationModel(ABC):
             y_col='class',
             target_size=(self.width, self.height),
             class_mode='categorical',
-            batch_size=self.batch_size
+            batch_size=self.batch_size,
+            seed=self.seed
         )
 
+        set_session(self.configure_session())
         model = self.build()
+
+        # allow to use multiple gpus if available
+        if self.gpus > 1:
+            print("using multi gpu mode!")
+            model = multi_gpu_model(model, gpus=self.gpus)
+        else:
+            print("using single GPU mode!")
+
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model.summary()
 
         history = model.fit_generator(
             train_generator,
@@ -111,7 +142,8 @@ class CNNClassificationModel(ABC):
             validation_data=validation_generator,
             validation_steps=total_validate / self.batch_size,
             steps_per_epoch=total_train / self.batch_size,
-            callbacks=callbacks
+            callbacks=callbacks,
+            use_multiprocessing=True
         )
 
         if self.plots:

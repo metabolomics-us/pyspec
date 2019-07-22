@@ -34,9 +34,6 @@ class SimpleCNNModel(CNNClassificationModel):
         model.add(Dropout(0.5))
         model.add(Dense(2, activation='softmax'))  # 2 because we have cat and dog classes
 
-        model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-
-        model.summary()
 
         return model
 
@@ -87,7 +84,4 @@ class PoolingCNNModel(CNNClassificationModel):
 
         model.add(Dense(2, activation='softmax'))
 
-        model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-
-        model.summary()
         return model
