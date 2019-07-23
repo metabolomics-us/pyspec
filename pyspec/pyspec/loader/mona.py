@@ -4,7 +4,7 @@ from typing import List
 from pyspec.loader import Spectra
 
 
-class MoNA:
+class MoNALoader:
     """
     simple MoNA client
     """
@@ -68,7 +68,8 @@ class MoNA:
 
         # build spectrum object
         return Spectra(
-            spectrum=spectrum['spectrum'],
+            id=spectrum['id'],
+            spectra=spectrum['spectrum'],
             splash=spectrum['splash']['splash'] if 'splash' in spectrum else None,
             name=name,
             ms_level=ms_level,
