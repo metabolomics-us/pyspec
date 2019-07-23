@@ -63,7 +63,7 @@ class MoNALoader:
             name = spectrum['id']
 
         # get additional properties
-        property_names = ['precursor m/z', 'precursor type', 'instrument', 'instrument type']
+        property_names = ['precursor m/z', 'precursor type', 'instrument', 'instrument type', 'ionization mode']
         property_values = [self._find_metadata(spectrum, p) for p in property_names]
 
         # build spectrum object
@@ -165,5 +165,5 @@ class MoNAQueryGenerator:
     def query_by_splash(self, splash: str) -> str:
         return f'splash.splash=={splash}'
 
-    def query_by_metedata(self, metadata_name: str, metadata_value: str) -> str:
-        return f'compound.metaData=q=\'name=="{metadata_name}" and value=="{metadata_value}"\''
+    def query_by_metadata(self, metadata_name: str, metadata_value: str) -> str:
+        return f'metaData=q=\'name=="{metadata_name}" and value=="{metadata_value}"\''
