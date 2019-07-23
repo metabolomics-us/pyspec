@@ -146,3 +146,23 @@ class MoNA:
         else:
             raise Exception(f'no metadata values available for: {metadata_name}')
 
+
+class MoNAQueryGenerator:
+    """
+    simple MoNA RSQL query generator
+    """
+
+    def query_by_name(self, name: str) -> str:
+        return f'compound.names=q=\'name=like="{name}"\''
+
+    def query_by_inchikey(self, inchikey: str) -> str:
+        return f'compound.metaData=q=\'name=="InChIKey" and value=="{inchikey}"\''
+
+    def query_by_partial_inchikey(self, partial_inchikey: str) -> str:
+        return f'compound.metaData=q=\'name=="InChIKey" and value=match=".*{partial_inchikey}.*"\''
+
+    def query_by_splash(self, splash: str) -> str:
+        return f'splash.splash=={splash}'
+
+    def query_by_metedata(self, metadata_name: str, metadata_value: str) -> str:
+        return f'compound.metaData=q=\'name=="{metadata_name}" and value=="{metadata_value}"\''
