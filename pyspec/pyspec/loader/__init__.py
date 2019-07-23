@@ -1,4 +1,4 @@
-from typing import NamedTuple, Optional
+from typing import List, NamedTuple, Optional
 
 
 class Spectra(NamedTuple):
@@ -6,6 +6,7 @@ class Spectra(NamedTuple):
     basic spectra
     """
     spectra: str
+    id: Optional[str] = None
     name: Optional[str] = None
     ms_level: int = 1
     inchiKey: Optional[str] = None
