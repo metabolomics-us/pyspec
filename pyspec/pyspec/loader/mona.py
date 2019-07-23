@@ -167,3 +167,12 @@ class MoNAQueryGenerator:
 
     def query_by_metadata(self, metadata_name: str, metadata_value: str) -> str:
         return f'metaData=q=\'name=="{metadata_name}" and value=="{metadata_value}"\''
+
+    def query_by_tag(self, tag: str) -> str:
+        return f'tags.text=={tag}'
+
+    def query_by_compound_classification(self, classification: str) -> str:
+        return f'compound.classification.value=="{classification}"'
+
+    def join_queries(self, queries: List[str]) -> str:
+        return ' and '.join(queries)
