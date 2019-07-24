@@ -1,13 +1,11 @@
 import os
-import warnings
 from abc import ABC, abstractmethod
 
-import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import Model
 from keras.backend import set_session
-from keras.callbacks import ModelCheckpoint, Callback
+from keras.callbacks import ModelCheckpoint
 from keras.utils import multi_gpu_model
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
@@ -17,106 +15,8 @@ from keras_preprocessing.image import ImageDataGenerator
 from pyspec.loader import Spectra
 from pyspec.machine.labels.generate_labels import LabelGenerator
 from pyspec.machine.spectra import Encoder
-
-
-class MultiGPUModelCheckpoint(Callback):
-    """Save the model after every epoch.
-
-    `filepath` can contain named formatting options,
-    which will be filled the value of `epoch` and
-    keys in `logs` (passed in `on_epoch_end`).
-
-    For example: if `filepath` is `weights.{epoch:02d}-{val_loss:.2f}.hdf5`,
-    then the model checkpoints will be saved with the epoch number and
-    the validation loss in the filename.
-
-    # Arguments
-        filepath: string, path to save the model file.
-        monitor: quantity to monitor.
-        0erbose: verbosity mode, 0 or 1.
-        0ave_best_only: if `save_best_only=True`,
-            0he latest best model according to
-            0he quantity monitored will not be overwritten.
-        0ode: one of {auto, min, max}.
-            If `save_best_only=True`, the decision
-            to overwrite the current save file is made
-            based on either the maximization or the
-            minimization of the monitored quantity. For `val_acc`,
-            this should be `max`, for `val_loss` this should
-            be `min`, etc. In `auto` mode, the direction is
-            automatically inferred from the name of the monitored quantity.
-        save_weights_only: if True, then only the model's weights will be
-            saved (`model.save_weights(filepath)`), else the full model
-            is saved (`model.save(filepath)`).
-        period: Interval (number of epochs) between checkpoints.
-    """
-
-    def __init__(self, filepath, monitor='val_loss', verbose=0,
-                 save_best_only=False, save_weights_only=False,
-                 mode='auto', period=1):
-        super(MultiGPUModelCheckpoint, self).__init__()
-        self.monitor = monitor
-        self.verbose = verbose
-        self.filepath = filepath
-        self.save_best_only = save_best_only
-        self.save_weights_only = save_weights_only
-        self.period = period
-        self.epochs_since_last_save = 0
-
-        if mode not in ['auto', 'min', 'max']:
-            warnings.warn('ModelCheckpoint mode %s is unknown, '
-                          'fallback to auto mode.' % (mode),
-                          RuntimeWarning)
-            mode = 'auto'
-
-        if mode == 'min':
-            self.monitor_op = np.less
-            self.best = np.Inf
-        elif mode == 'max':
-            self.monitor_op = np.greater
-            self.best = -np.Inf
-        else:
-            if 'acc' in self.monitor or self.monitor.startswith('fmeasure'):
-                self.monitor_op = np.greater
-                self.best = -np.Inf
-            else:
-                self.monitor_op = np.less
-                self.best = np.Inf
-
-    def on_epoch_end(self, epoch, logs=None):
-        logs = logs or {}
-        self.epochs_since_last_save += 1
-        if self.epochs_since_last_save >= self.period:
-            self.epochs_since_last_save = 0
-            filepath = self.filepath.format(epoch=epoch + 1, **logs)
-            if self.save_best_only:
-                current = logs.get(self.monitor)
-                if current is None:
-                    warnings.warn('Can save best model only with %s available, '
-                                  'skipping.' % (self.monitor), RuntimeWarning)
-                else:
-                    if self.monitor_op(current, self.best):
-                        if self.verbose > 0:
-                            print('\nEpoch %05d: %s improved from %0.5f to %0.5f,'
-                                  ' saving model to %s'
-                                  % (epoch + 1, self.monitor, self.best,
-                                     current, filepath))
-                        self.best = current
-                        if self.save_weights_only:
-                            self.model.layers[-2].save_weights(filepath, overwrite=True)
-                        else:
-                            self.model.layers[-2].save(filepath, overwrite=True)
-                    else:
-                        if self.verbose > 0:
-                            print('\nEpoch %05d: %s did not improve from %0.5f' %
-                                  (epoch + 1, self.monitor, self.best))
-            else:
-                if self.verbose > 0:
-                    print('\nEpoch %05d: saving model to %s' % (epoch + 1, filepath))
-                if self.save_weights_only:
-                    self.model.layers[-2].save_weights(filepath, overwrite=True)
-                else:
-                    self.model.layers[-2].save(filepath, overwrite=True)
+from pyspec.machine.util.checkpoint import MultiGPUModelCheckpoint
+from pyspec.machine.util.gpu import get_gpu_count
 
 
 class CNNClassificationModel(ABC):
@@ -143,6 +43,13 @@ class CNNClassificationModel(ABC):
         self.seed = np.random.seed()
         self.seed = seed
 
+    @abstractmethod
+    def build(self) -> Model:
+        """
+        builds the internal keras model
+        :return:
+        """
+
     def fix_seed(self):
         """
         fixes the random seed so results are repeatable
@@ -153,13 +60,6 @@ class CNNClassificationModel(ABC):
         from tensorflow import set_random_seed
         set_random_seed(self.seed)
 
-    @abstractmethod
-    def build(self) -> Model:
-        """
-        builds the internal keras model
-        :return:
-        """
-
     def configure_session(self):
         """
         configures the tensorflow session for us
@@ -167,19 +67,20 @@ class CNNClassificationModel(ABC):
         """
 
         import tensorflow as tf
-        from keras.backend.tensorflow_backend import set_session
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
         #        config.log_device_placement = True  # to log device placement (on which device the operation ran)
         sess = tf.Session(config=config)
         return sess
 
-    def train(self, input: str, generator: LabelGenerator, test_size=0.20, epochs=5, gpus=1, verbose=1):
+    def train(self, input: str, generator: LabelGenerator, test_size=0.20, epochs=5, gpus=None, verbose=1):
         """
         trains a model for us, based on the input
         :param input:
         :return:
         """
+        if gpus is None:
+            gpus = get_gpu_count()
 
         self.fix_seed()
         earlystop = EarlyStopping(patience=10)
@@ -190,20 +91,7 @@ class CNNClassificationModel(ABC):
                                                     min_lr=0.00001)
         callbacks = [earlystop, learning_rate_reduction]
 
-        if gpus > 1:
-            callbacks.append(
-                MultiGPUModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,
-                                        save_best_only=True,
-                                        mode='max')
-
-            )
-        else:
-            callbacks.append(
-                ModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,
-                                save_best_only=True,
-                                mode='max')
-
-            )
+        self.configure_checkpoints(callbacks, gpus, input, verbose)
         dataframe = generator.generate_dataframe(input)
 
         assert dataframe['file'].apply(lambda x: os.path.exists(x)).all(), 'please ensure all files exist!'
@@ -277,6 +165,30 @@ class CNNClassificationModel(ABC):
         del model
         from keras import backend as K
         K.clear_session()
+
+    def configure_checkpoints(self, callbacks, gpus, input, verbose):
+        """
+        configures the checkpoints for saving the best weights to a model file
+        :param callbacks:
+        :param gpus:
+        :param input:
+        :param verbose:
+        :return:
+        """
+        if gpus > 1:
+            callbacks.append(
+                MultiGPUModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,
+                                        save_best_only=True,
+                                        mode='max')
+
+            )
+        else:
+            callbacks.append(
+                ModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,
+                                save_best_only=True,
+                                mode='max')
+
+            )
 
     def get_model_file(self, input):
         return "{}/{}_model.h5".format(input, self.get_name())
