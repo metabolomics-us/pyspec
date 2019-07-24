@@ -65,7 +65,6 @@ class CNNClassificationModel(ABC):
         configures the tensorflow session for us
         :return:
         """
-
         import tensorflow as tf
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU

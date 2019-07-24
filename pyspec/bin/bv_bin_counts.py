@@ -6,12 +6,11 @@ Pulls all bins and counts associated with a given set of species
 
 import argparse
 import collections
+from typing import List
+
 import pandas as pd
 import pymongo
 import tqdm
-
-from typing import List
-
 
 MONGO_HOST = 'venus.fiehnlab.ucdavis.edu'
 MONGO_PORT = 27017
