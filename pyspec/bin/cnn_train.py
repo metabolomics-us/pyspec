@@ -1,9 +1,14 @@
-from pyspec.machine.labels.generate_labels import DirectoryLabelGenerator
-from pyspec.machine.model.application import XceptionModel
+import argparse
 
-batchsize = 2
-epochs = 500
-model = XceptionModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize, gpus=3)
-generator = DirectoryLabelGenerator()
+from pyspec.machine.factory import MachineFactory
 
-m = model.train("datasets/clean_dirty_full", generator, epochs=epochs)
+parser = argparse.ArgumentParser(description="train a neural network")
+
+parser.add_argument("--dataset", help="path to your dataset", required=True, type=str)
+parser.add_argument("--configuration", help="which configuration file to use", required=True, type=str)
+
+args = parser.parse_args()
+factory = MachineFactory(config_file=args.configuration)
+
+model = factory.load_model()
+factory.train(args.dataset, model=model)

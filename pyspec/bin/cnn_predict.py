@@ -1,20 +1,23 @@
-from keras_preprocessing.image import load_img
-from pandas import DataFrame
+import argparse
 from shutil import copyfile
 
-import matplotlib.pyplot as plt
+from pyspec.machine.factory import MachineFactory
 
-from pyspec.machine.model.Xception import XceptionModel
-from pyspec.machine.model.simple_cnn import PoolingCNNModel, SimpleCNNModel
-
-batchsize = 2
-from pyspec.machine.model.cnn import CNNClassificationModel
 import os
 
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-model = XceptionModel(width=500, height=500, channels=3, plots=True, batch_size=batchsize)
+parser = argparse.ArgumentParser(description="train a neural network")
+parser.add_argument("--dataset", help="path to your dataset", required=True, type=str)
+parser.add_argument("--predict", help="path to the directory containing the data you want to predict", required=True,
+                    type=str)
+parser.add_argument("--configuration", help="which configuration file to use", required=True, type=str)
+
+args = parser.parse_args()
+factory = MachineFactory(config_file=args.configuration)
+
+model = factory.load_model()
 
 
 def callback(file, classname):
@@ -29,5 +32,5 @@ def callback(file, classname):
              "{}/{}/{}".format("datasets/clean_dirty_full/sorted", classname, file))
 
 
-model.predict_from_directory(input="datasets/clean_dirty_full", dict="datasets/clean_dirty_full/test",
+model.predict_from_directory(input=args.dataset, dict=args.predict,
                              callback=callback)

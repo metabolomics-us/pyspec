@@ -5,7 +5,7 @@ from pymzml.spec import Spectrum
 
 from pyspec.parser.pymzl.filters import MSMinLevelFilter
 from pyspec.loader.binbase import BinBaseLoader
-from pyspec.machine.spectra import Encoder
+from pyspec.machine.spectra import Encoder, DualEncoder
 from pyspec.parser.pymzl.msms_finder import MSMSFinder
 
 
@@ -14,7 +14,7 @@ def test_encode():
     binbase = BinBaseLoader()
     data = binbase.load_spectra_for_bin_as_list(13, 1000)
 
-    encoder = Encoder(intensity_max=10000000, min_mz=80, max_mz=500)
+    encoder = DualEncoder(intensity_max=10000000, min_mz=80, max_mz=500)
     encoded = encoder.encodes(data, )
 
 
@@ -28,7 +28,7 @@ sources = [
 def test_encode_msms(source):
     finder = MSMSFinder()
 
-    encoder = Encoder(intensity_max=1000, min_mz=0, max_mz=2000, directory="data/encoded")
+    encoder = DualEncoder(intensity_max=1000, min_mz=0, max_mz=2000, directory="data/encoded")
 
     data = []
 

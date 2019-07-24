@@ -16,13 +16,17 @@ class MachineFactory:
         self.config_file = config_file
         self.training_config = config.config(filename=config_file, section="training")
 
-    def load_encoder(self) -> Encoder:
+    def load_encoder(self, name: str = None) -> Encoder:
         """
         loads the encoder for you
         :return:
         """
         encoder_config = config.config(filename=self.config_file, section="encoder")
-        encoder = Encoder(
+
+        if name is None:
+            name = encoder_config['default']
+
+        encoder: Encoder = self.factory(name)(
             width=int(encoder_config.get("width")),
             height=int(encoder_config.get("height")),
             min_mz=float(encoder_config.get("min_mz")),
@@ -57,8 +61,8 @@ class MachineFactory:
             name = model_config['default']
 
         model: CNNClassificationModel = self.factory(name)(
-            width=int(encoder_config.get("width")),
-            height=int(encoder_config.get("height")),
+            width=int(model_config.get("width")),
+            height=int(model_config.get("height")),
             plots=True if model_config.get("plot") == 'true' else False,
             batch_size=int(model_config['batch_size']),
             channels=3
@@ -80,3 +84,26 @@ class MachineFactory:
         if super_cls is not None:
             assert issubclass(cls, super_cls), "class {} should inherit from {}".format(class_name, super_cls.__name__)
         return cls
+
+    def train(self, input: str, model: Optional[CNNClassificationModel] = None, generator: Optional = None):
+        """
+        trains the model using the internal configuration
+        :param model:
+        :return:
+        """
+        train_config = config.config(filename=self.config_file, section="training")
+
+        if model is None:
+            model = self.load_model()
+
+        if generator is None:
+            generator = self.load_generator()
+
+        model.train(
+            input=input,
+            generator=generator,
+            test_size=float(train_config['test_size']),
+            epochs=int(train_config['epoch']),
+            gpus=int(train_config['gpus']),
+            verbose=int(train_config['verbose'])
+        )

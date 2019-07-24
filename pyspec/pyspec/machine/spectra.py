@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import matplotlib.pyplot as plt
 from typing import List, Optional
 
@@ -98,37 +100,10 @@ class Encoder:
             fig = plt.figure(
                 figsize=(self.height / self.dpi, self.width / self.dpi), dpi=self.dpi)
 
-            widths = [1]
-            heights = [16, 16, 1]
-            specs = fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
-
-            ax0 = plt.subplot(specs[0, 0])
-            ax1 = plt.subplot(specs[1, 0])
-            ax2 = plt.subplot(specs[2, 0])
-
-            ax0.scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=1)
-            ax0.set_xlim(self.min_mz, self.max_mz)
-            ax0.set_ylim(0, 1)
-
-            ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black',
-                     use_line_collection=True)
-            ax1.set_xlim(self.min_mz, self.max_mz)
-            ax1.set_ylim(0, 1)
-            ax1.spines['top'].set_visible(False)
-            ax1.spines['right'].set_visible(False)
-
-            ax2.barh("intensity", dataframe['intensity'].max(), align='center', color='black')
-            ax2.set_xlim(0, self.intensity_max)
-
-            if not self.axis:
-                ax0.axis('off')
-                ax1.axis('off')
-                ax2.axis('off')
+            self._encode_dataframe(dataframe, fig)
 
             plt.tight_layout()
-            #        plt.show()
             fig.canvas.draw()
-            size = fig.get_size_inches() * fig.dpi
 
             spectra_string = fig.canvas.tostring_rgb()
 
@@ -151,6 +126,36 @@ class Encoder:
         except ValueError:
             pass
 
+    @abstractmethod
+    def _encode_dataframe(self, dataframe, fig):
+        """
+        encodes the given dataframe on the figure in form of a graphic
+        :param dataframe:
+        :param fig:
+        :return:
+        """
+        widths = [1]
+        heights = [16, 16, 1]
+        specs = fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
+        ax0 = plt.subplot(specs[0, 0])
+        ax1 = plt.subplot(specs[1, 0])
+        ax2 = plt.subplot(specs[2, 0])
+        ax0.scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=1)
+        ax0.set_xlim(self.min_mz, self.max_mz)
+        ax0.set_ylim(0, 1)
+        ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black',
+                 use_line_collection=True)
+        ax1.set_xlim(self.min_mz, self.max_mz)
+        ax1.set_ylim(0, 1)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax2.barh("intensity", dataframe['intensity'].max(), align='center', color='black')
+        ax2.set_xlim(0, self.intensity_max)
+        if not self.axis:
+            ax0.axis('off')
+            ax1.axis('off')
+            ax2.axis('off')
+
     def encodes(self, spectra: List[Spectra]):
         """
         encodes a spectra as picture. Conceptually wise
@@ -171,3 +176,67 @@ class DualEncoder(Encoder):
     """
     this encoder encodes the data in form of 2 charts. 1 chart the actual spectra and the other a heatmap of accuracies
     """
+
+    def _encode_dataframe(self, dataframe, fig):
+        """
+        encodes the given dataframe on the figure in form of a graphic
+        :param dataframe:
+        :param fig:
+        :return:
+        """
+        widths = [1]
+        heights = [16, 16, 1]
+        specs = fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
+        ax0 = plt.subplot(specs[0, 0])
+        ax1 = plt.subplot(specs[1, 0])
+        ax2 = plt.subplot(specs[2, 0])
+        ax0.scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=1)
+        ax0.set_xlim(self.min_mz, self.max_mz)
+        ax0.set_ylim(0, 1)
+        ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black',
+                 use_line_collection=True)
+        ax1.set_xlim(self.min_mz, self.max_mz)
+        ax1.set_ylim(0, 1)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax2.barh("intensity", dataframe['intensity'].max(), align='center', color='black')
+        ax2.set_xlim(0, self.intensity_max)
+        if not self.axis:
+            ax0.axis('off')
+            ax1.axis('off')
+            ax2.axis('off')
+
+
+class HeatMapEncoder(Encoder):
+    """
+    encodes the spectra in form of a heatmap
+    """
+
+    def _encode_dataframe(self, dataframe, fig):
+        """
+        encodes the given dataframe on the figure in form of a graphic
+        :param dataframe:
+        :param fig:
+        :return:
+        """
+        widths = [1]
+        heights = [16, 16, 1]
+        specs = fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
+        ax0 = plt.subplot(specs[0, 0])
+        ax1 = plt.subplot(specs[1, 0])
+        ax2 = plt.subplot(specs[2, 0])
+        ax0.scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=1)
+        ax0.set_xlim(self.min_mz, self.max_mz)
+        ax0.set_ylim(0, 1)
+        ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black',
+                 use_line_collection=True)
+        ax1.set_xlim(self.min_mz, self.max_mz)
+        ax1.set_ylim(0, 1)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax2.barh("intensity", dataframe['intensity'].max(), align='center', color='black')
+        ax2.set_xlim(0, self.intensity_max)
+        if not self.axis:
+            ax0.axis('off')
+            ax1.axis('off')
+            ax2.axis('off')

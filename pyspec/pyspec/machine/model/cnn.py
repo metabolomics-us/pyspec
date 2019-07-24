@@ -1,18 +1,122 @@
 import os
+import warnings
 from abc import ABC, abstractmethod
 
+import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import Model
 from keras.backend import set_session
+from keras.callbacks import ModelCheckpoint, Callback
 from keras.utils import multi_gpu_model
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from typing import Tuple, List
-
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras_preprocessing.image import ImageDataGenerator
 from pyspec.loader import Spectra
 from pyspec.machine.labels.generate_labels import LabelGenerator
 from pyspec.machine.spectra import Encoder
+
+
+class MultiGPUModelCheckpoint(Callback):
+    """Save the model after every epoch.
+
+    `filepath` can contain named formatting options,
+    which will be filled the value of `epoch` and
+    keys in `logs` (passed in `on_epoch_end`).
+
+    For example: if `filepath` is `weights.{epoch:02d}-{val_loss:.2f}.hdf5`,
+    then the model checkpoints will be saved with the epoch number and
+    the validation loss in the filename.
+
+    # Arguments
+        filepath: string, path to save the model file.
+        monitor: quantity to monitor.
+        0erbose: verbosity mode, 0 or 1.
+        0ave_best_only: if `save_best_only=True`,
+            0he latest best model according to
+            0he quantity monitored will not be overwritten.
+        0ode: one of {auto, min, max}.
+            If `save_best_only=True`, the decision
+            to overwrite the current save file is made
+            based on either the maximization or the
+            minimization of the monitored quantity. For `val_acc`,
+            this should be `max`, for `val_loss` this should
+            be `min`, etc. In `auto` mode, the direction is
+            automatically inferred from the name of the monitored quantity.
+        save_weights_only: if True, then only the model's weights will be
+            saved (`model.save_weights(filepath)`), else the full model
+            is saved (`model.save(filepath)`).
+        period: Interval (number of epochs) between checkpoints.
+    """
+
+    def __init__(self, filepath, monitor='val_loss', verbose=0,
+                 save_best_only=False, save_weights_only=False,
+                 mode='auto', period=1):
+        super(MultiGPUModelCheckpoint, self).__init__()
+        self.monitor = monitor
+        self.verbose = verbose
+        self.filepath = filepath
+        self.save_best_only = save_best_only
+        self.save_weights_only = save_weights_only
+        self.period = period
+        self.epochs_since_last_save = 0
+
+        if mode not in ['auto', 'min', 'max']:
+            warnings.warn('ModelCheckpoint mode %s is unknown, '
+                          'fallback to auto mode.' % (mode),
+                          RuntimeWarning)
+            mode = 'auto'
+
+        if mode == 'min':
+            self.monitor_op = np.less
+            self.best = np.Inf
+        elif mode == 'max':
+            self.monitor_op = np.greater
+            self.best = -np.Inf
+        else:
+            if 'acc' in self.monitor or self.monitor.startswith('fmeasure'):
+                self.monitor_op = np.greater
+                self.best = -np.Inf
+            else:
+                self.monitor_op = np.less
+                self.best = np.Inf
+
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        self.epochs_since_last_save += 1
+        if self.epochs_since_last_save >= self.period:
+            self.epochs_since_last_save = 0
+            filepath = self.filepath.format(epoch=epoch + 1, **logs)
+            if self.save_best_only:
+                current = logs.get(self.monitor)
+                if current is None:
+                    warnings.warn('Can save best model only with %s available, '
+                                  'skipping.' % (self.monitor), RuntimeWarning)
+                else:
+                    if self.monitor_op(current, self.best):
+                        if self.verbose > 0:
+                            print('\nEpoch %05d: %s improved from %0.5f to %0.5f,'
+                                  ' saving model to %s'
+                                  % (epoch + 1, self.monitor, self.best,
+                                     current, filepath))
+                        self.best = current
+                        if self.save_weights_only:
+                            self.model.layers[-2].save_weights(filepath, overwrite=True)
+                        else:
+                            self.model.layers[-2].save(filepath, overwrite=True)
+                    else:
+                        if self.verbose > 0:
+                            print('\nEpoch %05d: %s did not improve from %0.5f' %
+                                  (epoch + 1, self.monitor, self.best))
+            else:
+                if self.verbose > 0:
+                    print('\nEpoch %05d: saving model to %s' % (epoch + 1, filepath))
+                if self.save_weights_only:
+                    self.model.layers[-2].save_weights(filepath, overwrite=True)
+                else:
+                    self.model.layers[-2].save(filepath, overwrite=True)
 
 
 class CNNClassificationModel(ABC):
@@ -23,7 +127,7 @@ class CNNClassificationModel(ABC):
     def __str__(self) -> str:
         return self.__class__.__name__
 
-    def __init__(self, width: int, height: int, channels: int, plots: bool = False, batch_size=15, gpus=3, seed=12345):
+    def __init__(self, width: int, height: int, channels: int, plots: bool = False, batch_size=15, seed=12345):
         """
         defines the model size
         :param width:
@@ -37,8 +141,17 @@ class CNNClassificationModel(ABC):
         self.plots = plots
         self.batch_size = batch_size
         self.seed = np.random.seed()
-        self.gpus = gpus
         self.seed = seed
+
+    def fix_seed(self):
+        """
+        fixes the random seed so results are repeatable
+        :return:
+        """
+        from numpy.random import seed
+        seed(self.seed)
+        from tensorflow import set_random_seed
+        set_random_seed(self.seed)
 
     @abstractmethod
     def build(self) -> Model:
@@ -57,27 +170,40 @@ class CNNClassificationModel(ABC):
         from keras.backend.tensorflow_backend import set_session
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
-#        config.log_device_placement = True  # to log device placement (on which device the operation ran)
+        #        config.log_device_placement = True  # to log device placement (on which device the operation ran)
         sess = tf.Session(config=config)
         return sess
 
-    def train(self, input: str, generator: LabelGenerator, test_size=0.20, epochs=5):
+    def train(self, input: str, generator: LabelGenerator, test_size=0.20, epochs=5, gpus=1, verbose=1):
         """
         trains a model for us, based on the input
         :param input:
         :return:
         """
-        from keras.callbacks import EarlyStopping, ReduceLROnPlateau
-        from keras_preprocessing.image import ImageDataGenerator
 
+        self.fix_seed()
         earlystop = EarlyStopping(patience=10)
         learning_rate_reduction = ReduceLROnPlateau(monitor='val_acc',
                                                     patience=2,
-                                                    verbose=1,
+                                                    verbose=verbose,
                                                     factor=0.5,
                                                     min_lr=0.00001)
         callbacks = [earlystop, learning_rate_reduction]
 
+        if gpus > 1:
+            callbacks.append(
+                MultiGPUModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,
+                                        save_best_only=True,
+                                        mode='max')
+
+            )
+        else:
+            callbacks.append(
+                ModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,
+                                save_best_only=True,
+                                mode='max')
+
+            )
         dataframe = generator.generate_dataframe(input)
 
         assert dataframe['file'].apply(lambda x: os.path.exists(x)).all(), 'please ensure all files exist!'
@@ -86,14 +212,14 @@ class CNNClassificationModel(ABC):
         train_df = train_df.reset_index(drop=True)
         validate_df = validate_df.reset_index(drop=True)
 
-        if self.plots:
-            train_df['class'].value_counts().plot.bar()
-            plt.title("training classes {}".format(self.get_name()))
-            plt.show()
+        #       if self.plots:
+        #           train_df['class'].value_counts().plot.bar()
+        #           plt.title("training classes {}".format(self.get_name()))
+        #           plt.show()
 
-            validate_df['class'].value_counts().plot.bar()
-            plt.title("validations classes {}".format(self.get_name()))
-            plt.show()
+        #           validate_df['class'].value_counts().plot.bar()
+        #           plt.title("validations classes {}".format(self.get_name()))
+        #           plt.show()
 
         total_train = train_df.shape[0]
         total_validate = validate_df.shape[0]
@@ -108,7 +234,6 @@ class CNNClassificationModel(ABC):
             target_size=(self.width, self.height),
             class_mode='categorical',
             batch_size=self.batch_size,
-            seed=self.seed
         )
 
         validation_datagen = ImageDataGenerator()
@@ -120,16 +245,15 @@ class CNNClassificationModel(ABC):
             target_size=(self.width, self.height),
             class_mode='categorical',
             batch_size=self.batch_size,
-            seed=self.seed
         )
 
         set_session(self.configure_session())
         model = self.build()
 
         # allow to use multiple gpus if available
-        if self.gpus > 1:
+        if gpus > 1:
             print("using multi gpu mode!")
-            model = multi_gpu_model(model, gpus=self.gpus)
+            model = multi_gpu_model(model, gpus=gpus, cpu_relocation=True)
         else:
             print("using single GPU mode!")
 
@@ -143,17 +267,19 @@ class CNNClassificationModel(ABC):
             validation_steps=total_validate / self.batch_size,
             steps_per_epoch=total_train / self.batch_size,
             callbacks=callbacks,
-            use_multiprocessing=True
+            use_multiprocessing=True,
+            verbose=verbose
         )
 
         if self.plots:
             self.plot_training(epochs, history)
 
-        model.save_weights("{}/{}_model.h5".format(input, self.get_name()))
-        model = None
-
+        del model
         from keras import backend as K
         K.clear_session()
+
+    def get_model_file(self, input):
+        return "{}/{}_model.h5".format(input, self.get_name())
 
     def plot_training(self, epochs, history):
         """
@@ -173,7 +299,7 @@ class CNNClassificationModel(ABC):
         legend = plt.legend(loc='best', shadow=True)
         plt.tight_layout()
 
-        plt.title("training report {}".format(self.get_name()))
+        plt.title("training report {}, bs = {}".format(self.get_name(), self.batch_size))
         plt.show()
 
     def predict_from_dataframe(self, input: str, dataframe: DataFrame, file_column: str = "file",
@@ -207,10 +333,6 @@ class CNNClassificationModel(ABC):
 
         assert len(predict) > 0, "sorry we were not able to predict anything!"
         dataframe[class_column] = np.argmax(predict, axis=-1)
-
-        if self.plots:
-            dataframe[class_column].value_counts().plot.bar()
-            plt.show()
 
         return dataframe
 
@@ -282,7 +404,7 @@ class CNNClassificationModel(ABC):
 
     def get_model(self, input):
         m = self.build()
-        m.load_weights("{}/{}_model.h5".format(input, self.get_name()))
+        m.load_weights(self.get_model_file(input))
         return m
 
     def predict_from_spectra(self, input: str, spectra: Spectra, encoder: Encoder) -> str:
@@ -309,4 +431,4 @@ class CNNClassificationModel(ABC):
         returns the name of this model, by default this is the concrete class name
         :return:
         """
-        return self.__class__.__name__
+        return "{}_bs_{}".format(self.__class__.__name__, self.batch_size)
