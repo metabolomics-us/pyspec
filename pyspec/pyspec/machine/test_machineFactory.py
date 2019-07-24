@@ -39,3 +39,8 @@ def test_load_default_model():
 
     assert isinstance(model, CNNClassificationModel)
     assert isinstance(model, Resnet50CNNModel)
+
+
+def test_train_model():
+    machine = MachineFactory()
+    machine.train("datasets/clean_dirty")
