@@ -85,7 +85,8 @@ class MachineFactory:
             assert issubclass(cls, super_cls), "class {} should inherit from {}".format(class_name, super_cls.__name__)
         return cls
 
-    def train(self, input: str, model: Optional[CNNClassificationModel] = None, generator: Optional = None):
+    def train(self, input: str, model: Optional[CNNClassificationModel] = None, generator: Optional = None,
+              gpus: int = None):
         """
         trains the model using the internal configuration
         :param model:
@@ -104,6 +105,6 @@ class MachineFactory:
             generator=generator,
             test_size=float(train_config['test_size']),
             epochs=int(train_config['epoch']),
-            gpus=int(train_config['gpus']),
+            gpus=int(train_config['gpus']) if gpus is None else int(gpus),
             verbose=int(train_config['verbose'])
         )
