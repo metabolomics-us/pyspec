@@ -8,6 +8,7 @@ pipeline {
   stages {
     stage('setup') {
       steps {
+        sh 'sudo apt install python3-pip'
         sh '''cd pyspec
 pip3 install -r requirements.txt'''
       }
