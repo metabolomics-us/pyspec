@@ -12,7 +12,7 @@ pipeline {
         sh '''virtualenv .venv
 source .venv/bin/activate
 cd pyspec
-pip3 install --user -r requirements.txt'''
+pip3 install -r requirements.txt'''
       }
     }
     stage('test') {
