@@ -17,7 +17,8 @@ pip3 install -r requirements.txt'''
     }
     stage('test') {
       steps {
-        sh '''cd pyspec
+        sh '''source .venv/bin/activate
+cd pyspec
 pytest ./'''
       }
     }
