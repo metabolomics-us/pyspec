@@ -10,7 +10,7 @@ pipeline {
       steps {
         sh 'pwd'
         sh '''cd pyspec
-pip3 -user install -r requirements.txt'''
+pip3 install --user -r requirements.txt'''
       }
     }
     stage('test') {
