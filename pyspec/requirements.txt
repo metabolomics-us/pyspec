@@ -19,3 +19,5 @@ tensorflow-gpu==1.13.1
 numba
 tabulate
 pymongo
+boto3==1.7.22
+botocore==1.10.22
