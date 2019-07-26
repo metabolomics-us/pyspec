@@ -9,7 +9,9 @@ pipeline {
     stage('setup') {
       steps {
         sh 'pwd'
-        sh '''cd pyspec
+        sh '''virtualenv .venv
+source .venv/bin/activate
+cd pyspec
 pip3 install --user -r requirements.txt'''
       }
     }
