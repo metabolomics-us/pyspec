@@ -1,14 +1,14 @@
 pipeline {
   agent {
     docker {
-      image 'nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04'
+      image 'eros.fiehnlab.ucdavis.edu/jenkins-agent:latest'
     }
 
   }
   stages {
     stage('setup') {
       steps {
-        sh 'sudo apt install python3-pip'
+        sh 'pwd'
         sh '''cd pyspec
 pip3 install -r requirements.txt'''
       }
