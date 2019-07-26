@@ -1,7 +1,7 @@
 pipeline {
   agent {
     docker {
-      image 'tensorflow/tensorflow:1.13.1-gpu-py3'
+      image 'eros.fiehnlab.ucdavis.edu/jenkins-agent:latest'
     }
 
   }
