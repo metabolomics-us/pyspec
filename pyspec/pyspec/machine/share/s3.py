@@ -32,11 +32,24 @@ class S3Share(Share):
         else:
             return False
 
-    def retrieve(self, name: str, root_folder: str = 'datasets'):
-        # 1. download folder
+    def retrieve(self, name: str, root_folder: str = 'datasets', force: bool = False):
+        # 1. download folder contents
+        local_dir = "{}/{}".format(root_folder, name)
 
-        # 2. unzip it
+        # drop existing data
+        if os.path.exists(local_dir):
+            if force:
+                shutil.rmtree(local_dir)
+            else:
+                raise FileExistsError("sorry this data set already exists and force was false, so we will not continue!")
 
+        os.makedirs(local_dir, exist_ok=True)
+
+        bucket = self.s3.Bucket(self.bucket_name)
+
+        # download all model files and training data
+        for object in bucket.objects.filter(Prefix=name):
+            bucket.download_file(object.key, "{}/{}".format(root_folder, object.key))
         pass
 
     def submit(self, name: str, root_folder: str = 'datasets'):

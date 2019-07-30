@@ -7,11 +7,12 @@ class Share(ABC):
     """
 
     @abstractmethod
-    def retrieve(self, name: str, root_folder: str = 'datasets'):
+    def retrieve(self, name: str, root_folder: str = 'datasets', force:bool = False):
         """
         retrieves the given dataset and stores it at the given location
         :param name: 
         :param root: 
+        :param force: do we want to overwrite local data
         :return: 
         """
 
