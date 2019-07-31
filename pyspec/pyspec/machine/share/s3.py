@@ -1,4 +1,8 @@
+from typing import Optional
+
 import boto3
+from botocore import UNSIGNED
+from botocore.config import Config
 
 from pyspec import config
 from pyspec.machine.share import Share
@@ -41,7 +45,8 @@ class S3Share(Share):
             if force:
                 shutil.rmtree(local_dir)
             else:
-                raise FileExistsError("sorry this data set already exists and force was false, so we will not continue!")
+                raise FileExistsError(
+                    "sorry this data set already exists and force was false, so we will not continue!")
 
         os.makedirs(local_dir, exist_ok=True)
 
@@ -75,7 +80,7 @@ class S3Share(Share):
 
         pass
 
-    def __init__(self, config_file: str = "shares.ini"):
+    def __init__(self, config_file: str = "shares.ini", read_only: Optional[bool] = False):
         """
         
         :param config_file: 
@@ -84,9 +89,13 @@ class S3Share(Share):
         bucket_config = config.config(config_file, "s3-bucket")
         self.bucket_name = bucket_config["name"]
         self.constraint = bucket_config["constraint"]
-        self.s3 = boto3.resource('s3')
-        self.client = boto3.client('s3')
 
+        if read_only is True:
+            self.client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
+            self.s3 = boto3.resource('s3', config=Config(signature_version=UNSIGNED))
+        else:
+            self.client = boto3.client('s3')
+            self.s3 = boto3.resource('s3')
         try:
             self.client.create_bucket(Bucket=self.bucket_name, CreateBucketConfiguration={
                 'LocationConstraint': self.constraint})

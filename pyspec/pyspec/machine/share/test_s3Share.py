@@ -17,6 +17,12 @@ def test_retrieve():
     share.retrieve("clean_dirty", "test_retrieved", force=True)
 
 
+def test_retrieve_no_credentials():
+    share = S3Share(read_only=True)
+    assert share.exists("clean_dirty")
+    share.retrieve("clean_dirty", "test_retrieved", force=True)
+
+
 def test_retrieve_no_overwrite():
     share = S3Share()
 
