@@ -47,4 +47,4 @@ permissions like the following
 }
 ```
 
-To make it publically accessible, but limit it to a certain ip range.
+To make it publicly accessible, but limit it to a certain ip range.
