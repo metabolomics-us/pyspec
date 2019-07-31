@@ -2,6 +2,7 @@ pipeline {
   agent {
     docker {
       image 'eros.fiehnlab.ucdavis.edu/jenkins-agent:latest'
+      args '--device=/dev/nvidiactl --device=/dev/nvidia-uvm --device=/dev/nvidia1'
     }
 
   }
