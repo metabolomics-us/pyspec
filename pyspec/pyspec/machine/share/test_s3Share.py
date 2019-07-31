@@ -14,7 +14,7 @@ def test_submit():
 def test_retrieve():
     share = S3Share()
     assert share.exists("clean_dirty")
-    share.retrieve("clean_dirty", "retrieved", force=True)
+    share.retrieve("clean_dirty", "test_retrieved", force=True)
 
 
 def test_retrieve_no_overwrite():
@@ -24,10 +24,10 @@ def test_retrieve_no_overwrite():
 
     assert share.exists("clean_dirty")
 
-    share.retrieve("clean_dirty", "retrieved", force=True)
+    share.retrieve("clean_dirty", "test_retrieved", force=True)
 
     try:
-        share.retrieve("clean_dirty", "retrieved", force=False)
+        share.retrieve("clean_dirty", "test_retrieved", force=False)
         fail()
     except FileExistsError as e:
         pass
