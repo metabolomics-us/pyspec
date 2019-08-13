@@ -5,8 +5,8 @@ from pyspec.parser.pymzl.filters import MSMinLevelFilter
 from pyspec.parser.pymzl.msms_finder import MSMSFinder
 
 sources = [
-    "http://luna.fiehnlab.ucdavis.edu/D%3A/mzml/B1_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml",  # should download this file
-    "data/B1_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml"  # should load this file directly
+    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/mzml/B1A_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml",  # should download this file
+    "data/B1A_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml"  # should load this file directly
 ]
 
 

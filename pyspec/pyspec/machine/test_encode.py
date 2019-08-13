@@ -19,8 +19,8 @@ def test_encode():
 
 
 sources = [
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/mzml/B1_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1_SA0002_TEDDYLipids_Pos_1GZR9_.mzml",
+    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/mzml/B1A_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml",
+    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1A_SA0002_TEDDYLipids_Pos_1GZR9_.mzml",
 ]
 
 

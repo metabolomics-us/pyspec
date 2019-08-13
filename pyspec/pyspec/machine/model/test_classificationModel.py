@@ -14,8 +14,6 @@ batchsizes = [
 epochs = 100
 gpu_count = [
     1,
-    2,
-    3,
 ]
 
 models = [

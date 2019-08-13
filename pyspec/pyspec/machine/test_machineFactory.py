@@ -43,4 +43,4 @@ def test_load_default_model():
 
 def test_train_model():
     machine = MachineFactory()
-    machine.train("datasets/clean_dirty")
+    machine.train("datasets/clean_dirty",gpus=1)
