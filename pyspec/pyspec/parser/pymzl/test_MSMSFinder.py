@@ -47,6 +47,7 @@ def test_locate_with_msms_filter(source):
     finder.locate(msmsSource=source, callback=callback, filters=[MSMinLevelFilter(2)])
     assert count > 0
 
+
 @pytest.mark.parametrize("source", sources)
 def test_convert(source):
     """
@@ -63,9 +64,9 @@ def test_convert(source):
 
         converted = msms.convert(msms)
 
-
     finder.locate(msmsSource=source, callback=callback, filters=[MSMinLevelFilter(2)])
     assert count > 0
+
 
 @pytest.mark.parametrize("source", sources)
 def test_locate_with_msms_and_compute_count(source):
