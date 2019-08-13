@@ -45,7 +45,12 @@ class MSMSFinder:
 
         file_name = self.download_rawdata(msmsSource, "data")
 
-        reader = pymzml.run.Reader(file_name)
+        try:
+            reader = pymzml.run.Reader(file_name)
+        except Exception as e:
+
+            file_name = self.download_rawdata(msmsSource, "data",force=True)
+            reader = pymzml.run.Reader(file_name)
 
         def evaluate(spectra):
             """
@@ -72,7 +77,7 @@ class MSMSFinder:
 
             evaluate(spectra)
 
-    def download_rawdata(self, source, dir: str = "data"):
+    def download_rawdata(self, source, dir: str = "data", force:bool = False):
         """
         downloads a rawdata file and stores it in the local directory
         :param source:
@@ -80,7 +85,7 @@ class MSMSFinder:
         :return:
         """
 
-        if os.path.exists(source):
+        if os.path.exists(source) and not force:
             # not a url
             return source
 

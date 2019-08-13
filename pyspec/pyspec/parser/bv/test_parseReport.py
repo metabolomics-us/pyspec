@@ -12,15 +12,3 @@ def test_parse_file_fail_no_file():
         fail()
     except Exception:
         pass
-
-
-def test_parse_file_success():
-    report = ParseReport()
-
-    data = report.parse_file("test.txt",delimiter="\t")
-
-    assert data
-    assert len(data) == 10
-
-    assert data[0].name == "alanine"
-    assert data[0].spectra != ""
