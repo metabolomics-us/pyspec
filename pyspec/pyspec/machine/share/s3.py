@@ -36,12 +36,12 @@ class S3Share(Share):
         else:
             return False
 
-    def retrieve(self, name: str, root_folder: str = 'datasets', force: bool = False):
+    def retrieve(self, name: str, root_folder: str = 'datasets', force: bool = False, drop_existing: bool = False):
         # 1. download folder contents
         local_dir = "{}/{}".format(root_folder, name)
 
         # drop existing data
-        if os.path.exists(local_dir):
+        if os.path.exists(local_dir) and drop_existing is True:
             if force:
                 shutil.rmtree(local_dir)
             else:
@@ -100,4 +100,4 @@ class S3Share(Share):
             self.client.create_bucket(Bucket=self.bucket_name, CreateBucketConfiguration={
                 'LocationConstraint': self.constraint})
         except Exception as e:
-            print("sorry this bucket caused an error - this mean it exist, no reason to worry")
+            pass

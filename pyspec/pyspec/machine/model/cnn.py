@@ -196,14 +196,16 @@ class CNNClassificationModel(ABC):
             callbacks.append(earlystop)
 
         if self.tensor_board:
-            os.makedirs("./tensorboard/logs",exist_ok=True)
+            os.makedirs("./tensorboard/logs", exist_ok=True)
             callbacks.append(
-                TensorBoard(log_dir='./tensorboard/logs', histogram_freq=0, batch_size=self.batch_size, write_graph=True,
+                TensorBoard(log_dir='./tensorboard/logs', histogram_freq=0, batch_size=self.batch_size,
+                            write_graph=True,
                             write_grads=False, write_images=True, embeddings_freq=0,
                             embeddings_layer_names=None, embeddings_metadata=None, embeddings_data=None,
                             update_freq='epoch'))
 
     def get_model_file(self, input):
+        print("loading file in {}".format(input))
         return "{}/{}_model.h5".format(input, self.get_name())
 
     def plot_training(self, epochs, history):
@@ -308,9 +310,11 @@ class CNNClassificationModel(ABC):
 
         for file in os.listdir(dict):
             f = os.path.abspath("{}/{}".format(dict, file))
+            
             if os.path.isfile(f):
                 dataframe = DataFrame([{'file': f}])
 
+                assert os.path.exists(f), "please make sure the file {} exist!".format(f)
                 nb_samples = dataframe.shape[0]
                 test_generator = test_gen.flow_from_dataframe(
                     dataframe,
@@ -325,7 +329,7 @@ class CNNClassificationModel(ABC):
 
                 predict = m.predict_generator(test_generator, steps=np.ceil(nb_samples / self.batch_size))
                 cat = np.argmax(predict, axis=-1)[0]
-                callback(file, cat)
+                callback(file, cat, full_path=f)
 
     def get_model(self, input):
         m = self.build()
