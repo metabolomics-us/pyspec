@@ -42,3 +42,5 @@ if args.gpu < 0:
 else:
     model.predict_from_directory(input=args.dataset, dict=args.predict,
                                  callback=callback)
+    
+    
