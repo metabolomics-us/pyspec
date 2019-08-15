@@ -65,7 +65,10 @@ class MachineFactory:
             height=int(model_config.get("height")),
             plots=True if model_config.get("plot") == 'true' else False,
             batch_size=int(model_config['batch_size']),
-            channels=3
+            channels=3,
+            tensor_board=True if model_config.get("tensor_board") == 'true' else False,
+            early_stop=True if model_config.get("early_stop") == 'true' else False,
+
         )
 
         return model
@@ -106,5 +109,6 @@ class MachineFactory:
             test_size=float(train_config['test_size']),
             epochs=int(train_config['epoch']),
             gpus=int(train_config['gpus']) if gpus is None else int(gpus),
-            verbose=int(train_config['verbose'])
+            verbose=int(train_config['verbose']),
+
         )

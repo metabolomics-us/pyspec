@@ -13,11 +13,14 @@ parser.add_argument("--dataset", help="path to your dataset", required=True, typ
 parser.add_argument("--predict", help="path to the directory containing the data you want to predict", required=True,
                     type=str)
 parser.add_argument("--configuration", help="which configuration file to use", required=True, type=str)
+parser.add_argument("--gpu", help="which gpu to use", type=int, default=-1)
+
+parser.add_argument("--model", help="model you would like to predict", required=False, type=str, default=None)
 
 args = parser.parse_args()
 factory = MachineFactory(config_file=args.configuration)
 
-model = factory.load_model()
+model = factory.load_model(name=args.model)
 
 
 def callback(file, classname):
@@ -32,5 +35,10 @@ def callback(file, classname):
              "{}/{}/{}".format("datasets/clean_dirty_full/sorted", classname, file))
 
 
-model.predict_from_directory(input=args.dataset, dict=args.predict,
-                             callback=callback)
+if args.gpu < 0:
+    # do this on cpu
+    model.predict_from_directory(input=args.dataset, dict=args.predict,
+                                 callback=callback)
+else:
+    model.predict_from_directory(input=args.dataset, dict=args.predict,
+                                 callback=callback)

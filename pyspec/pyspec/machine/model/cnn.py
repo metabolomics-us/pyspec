@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from keras import Model
 from keras.backend import set_session
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, TensorBoard
 from keras.utils import multi_gpu_model
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
@@ -27,7 +27,8 @@ class CNNClassificationModel(ABC):
     def __str__(self) -> str:
         return self.__class__.__name__
 
-    def __init__(self, width: int, height: int, channels: int, plots: bool = False, batch_size=15, seed=12345):
+    def __init__(self, width: int, height: int, channels: int, plots: bool = False, batch_size=15, seed=12345,
+                 early_stop=False, tensor_board=True):
         """
         defines the model size
         :param width:
@@ -42,6 +43,8 @@ class CNNClassificationModel(ABC):
         self.batch_size = batch_size
         self.seed = np.random.seed()
         self.seed = seed
+        self.early_stop = early_stop
+        self.tensor_board = tensor_board
 
     @abstractmethod
     def build(self) -> Model:
@@ -82,13 +85,12 @@ class CNNClassificationModel(ABC):
             gpus = get_gpu_count()
 
         self.fix_seed()
-        earlystop = EarlyStopping(patience=10)
         learning_rate_reduction = ReduceLROnPlateau(monitor='val_acc',
                                                     patience=2,
                                                     verbose=verbose,
                                                     factor=0.5,
                                                     min_lr=0.00001)
-        callbacks = [earlystop, learning_rate_reduction]
+        callbacks = [learning_rate_reduction]
 
         self.configure_checkpoints(callbacks, gpus, input, verbose)
         dataframe = generator.generate_dataframe(input)
@@ -188,6 +190,18 @@ class CNNClassificationModel(ABC):
                                 mode='max')
 
             )
+
+        if self.early_stop is True:
+            earlystop = EarlyStopping(patience=10)
+            callbacks.append(earlystop)
+
+        if self.tensor_board:
+            os.makedirs("./tensorboard/logs",exist_ok=True)
+            callbacks.append(
+                TensorBoard(log_dir='./tensorboard/logs', histogram_freq=0, batch_size=self.batch_size, write_graph=True,
+                            write_grads=False, write_images=True, embeddings_freq=0,
+                            embeddings_layer_names=None, embeddings_metadata=None, embeddings_data=None,
+                            update_freq='epoch'))
 
     def get_model_file(self, input):
         return "{}/{}_model.h5".format(input, self.get_name())
