@@ -101,40 +101,11 @@ class CNNClassificationModel(ABC):
         train_df = train_df.reset_index(drop=True)
         validate_df = validate_df.reset_index(drop=True)
 
-        #       if self.plots:
-        #           train_df['class'].value_counts().plot.bar()
-        #           plt.title("training classes {}".format(self.get_name()))
-        #           plt.show()
-
-        #           validate_df['class'].value_counts().plot.bar()
-        #           plt.title("validations classes {}".format(self.get_name()))
-        #           plt.show()
-
         total_train = train_df.shape[0]
         total_validate = validate_df.shape[0]
 
-        train_datagen = ImageDataGenerator()
-
-        train_generator = train_datagen.flow_from_dataframe(
-            train_df,
-            None,
-            x_col='file',
-            y_col='class',
-            target_size=(self.width, self.height),
-            class_mode='categorical',
-            batch_size=self.batch_size,
-        )
-
-        validation_datagen = ImageDataGenerator()
-        validation_generator = validation_datagen.flow_from_dataframe(
-            validate_df,
-            None,
-            x_col='file',
-            y_col='class',
-            target_size=(self.width, self.height),
-            class_mode='categorical',
-            batch_size=self.batch_size,
-        )
+        train_generator = self.generate_training_generator(train_df)
+        validation_generator = self.generate_validation_generator(validate_df)
 
         set_session(self.configure_session())
         model = self.build()
@@ -166,6 +137,42 @@ class CNNClassificationModel(ABC):
         del model
         from keras import backend as K
         K.clear_session()
+
+    def generate_validation_generator(self, validate_df: DataFrame):
+        """
+        generates a validation generator for based on the validation dataframe
+        :param validate_df:
+        :return:
+        """
+        validation_datagen = ImageDataGenerator()
+        validation_generator = validation_datagen.flow_from_dataframe(
+            validate_df,
+            None,
+            x_col='file',
+            y_col='class',
+            target_size=(self.width, self.height),
+            class_mode='categorical',
+            batch_size=self.batch_size,
+        )
+        return validation_generator
+
+    def generate_training_generator(self, train_df: DataFrame):
+        """
+        generate a training generator for us based on the training data frame
+        :param train_df:
+        :return:
+        """
+        train_datagen = ImageDataGenerator()
+        train_generator = train_datagen.flow_from_dataframe(
+            train_df,
+            None,
+            x_col='file',
+            y_col='class',
+            target_size=(self.width, self.height),
+            class_mode='categorical',
+            batch_size=self.batch_size,
+        )
+        return train_generator
 
     def configure_checkpoints(self, callbacks, gpus, input, verbose):
         """
@@ -310,7 +317,7 @@ class CNNClassificationModel(ABC):
 
         for file in os.listdir(dict):
             f = os.path.abspath("{}/{}".format(dict, file))
-            
+
             if os.path.isfile(f):
                 dataframe = DataFrame([{'file': f}])
 

@@ -59,6 +59,8 @@ class MachineFactory:
 
         if name is None:
             name = model_config['default']
+        elif '.' not in name:
+            name = "pyspec.machine.model.application.{}".format(name)
 
         model: CNNClassificationModel = self.factory(name)(
             width=int(model_config.get("width")),
