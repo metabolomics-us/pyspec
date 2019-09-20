@@ -43,22 +43,22 @@ class Encoder:
         if self.directory is not None:
             pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
 
-    def encode(self, spec: Spectra, prefix: str = None, store_string: bool = False) -> str:
+    def encode(self, spec: Spectra, prefix: str = None, store_meta: bool = False) -> str:
         """
         encodes a spectra to a string in graphical form
         :param spec:
         :param prefix:
-        :param store_string:
+        :param store_meta:
         :return:
         """
-        return self._encode(spec, prefix, store_string)
+        return self._encode(spec, prefix, store_meta)
 
-    def _encode(self, spec: Spectra, prefix: str = None, store_string: bool = False):
+    def _encode(self, spec: Spectra, prefix: str = None, store_meta: bool = False):
         """
         encodes the given spectra
         :param spec: spectra
         :param prefix: prefix
-        :param store_string: do you also want to store the spectra string for each spectra?
+        :param store_meta: do you also want to store the spectra string for each spectra?
         :return: an image representation of the encoded spectra in form of a string
         """
         # dumb approach to find max mz
@@ -117,9 +117,13 @@ class Encoder:
 
                 plt.close(fig=fig)
 
-                if store_string:
-                    with open("{}/{}.txt".format(directory, name), 'w') as the_file:
-                        the_file.write(spec.spectra)
+                if store_meta:
+                    with open("{}/{}.meta".format(directory, name), 'w') as the_file:
+                        the_file.write("spectra\t{}\n".format(spec.spectra))
+                        the_file.write("level\t{}\n".format(spec.ms_level))
+                        the_file.write("intensity\y{}\n".format(dataframe['intensity'].max()))
+                        the_file.write("splash\t{}\n".format(name))
+
                 return None
 
             return spectra_string
@@ -134,27 +138,6 @@ class Encoder:
         :param fig:
         :return:
         """
-        widths = [1]
-        heights = [16, 16, 1]
-        specs = fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
-        ax0 = plt.subplot(specs[0, 0])
-        ax1 = plt.subplot(specs[1, 0])
-        ax2 = plt.subplot(specs[2, 0])
-        ax0.scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=1)
-        ax0.set_xlim(self.min_mz, self.max_mz)
-        ax0.set_ylim(0, 1)
-        ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black',
-                 use_line_collection=True)
-        ax1.set_xlim(self.min_mz, self.max_mz)
-        ax1.set_ylim(0, 1)
-        ax1.spines['top'].set_visible(False)
-        ax1.spines['right'].set_visible(False)
-        ax2.barh("intensity", dataframe['intensity'].max(), align='center', color='black')
-        ax2.set_xlim(0, self.intensity_max)
-        if not self.axis:
-            ax0.axis('off')
-            ax1.axis('off')
-            ax2.axis('off')
 
     def encodes(self, spectra: List[Spectra]):
         """

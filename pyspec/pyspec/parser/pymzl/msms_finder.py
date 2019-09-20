@@ -68,6 +68,9 @@ class MSMSFinder:
             else:
                 callback(spectra, file_name)
 
+        # just let them first we are starting now
+        callback(None, file_name)
+
         for spectra in tqdm(reader, total=reader.get_spectrum_count(),
                             unit='spectra',
                             unit_scale=True, leave=True, desc=f"analyzing spectra in {file_name}"):

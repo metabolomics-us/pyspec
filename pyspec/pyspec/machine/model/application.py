@@ -2,10 +2,10 @@ from keras import Model
 from keras.applications import VGG16, VGG19, InceptionV3, InceptionResNetV2, MobileNet, MobileNetV2, DenseNet121, \
     DenseNet169, DenseNet201, NASNetMobile, NASNetLarge, ResNet50, Xception
 
-from pyspec.machine.model.cnn import CNNClassificationModel
+from pyspec.machine.model.cnn import SingleInputCNNModel
 
 
-class Resnet50CNNModel(CNNClassificationModel):
+class Resnet50CNNModel(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = ResNet50(
@@ -18,7 +18,7 @@ class Resnet50CNNModel(CNNClassificationModel):
         return model
 
 
-class XceptionModel(CNNClassificationModel):
+class XceptionModel(SingleInputCNNModel):
     """
     keras XCEPTION model
     """
@@ -34,7 +34,7 @@ class XceptionModel(CNNClassificationModel):
         return model
 
 
-class VGG16Model(CNNClassificationModel):
+class VGG16Model(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = VGG16(
@@ -47,7 +47,7 @@ class VGG16Model(CNNClassificationModel):
         return model
 
 
-class VGG19Model(CNNClassificationModel):
+class VGG19Model(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = VGG19(
@@ -60,7 +60,7 @@ class VGG19Model(CNNClassificationModel):
         return model
 
 
-class InceptionModel(CNNClassificationModel):
+class InceptionModel(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = InceptionV3(
@@ -73,7 +73,7 @@ class InceptionModel(CNNClassificationModel):
         return model
 
 
-class InceptionResNetModel(CNNClassificationModel):
+class InceptionResNetModel(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = InceptionResNetV2(
@@ -86,7 +86,7 @@ class InceptionResNetModel(CNNClassificationModel):
         return model
 
 
-class MobileNetModel(CNNClassificationModel):
+class MobileNetModel(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = MobileNet(
@@ -99,7 +99,7 @@ class MobileNetModel(CNNClassificationModel):
         return model
 
 
-class MobileNetV2Model(CNNClassificationModel):
+class MobileNetV2Model(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = MobileNetV2(
@@ -112,7 +112,7 @@ class MobileNetV2Model(CNNClassificationModel):
         return model
 
 
-class DenseNet121Model(CNNClassificationModel):
+class DenseNet121Model(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = DenseNet121(
@@ -125,7 +125,7 @@ class DenseNet121Model(CNNClassificationModel):
         return model
 
 
-class DenseNet169Model(CNNClassificationModel):
+class DenseNet169Model(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = DenseNet169(
@@ -138,7 +138,7 @@ class DenseNet169Model(CNNClassificationModel):
         return model
 
 
-class DenseNet201Model(CNNClassificationModel):
+class DenseNet201Model(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = DenseNet201(
@@ -151,7 +151,7 @@ class DenseNet201Model(CNNClassificationModel):
         return model
 
 
-class NASNetMobileModel(CNNClassificationModel):
+class NASNetMobileModel(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = NASNetMobile(
@@ -164,7 +164,7 @@ class NASNetMobileModel(CNNClassificationModel):
         return model
 
 
-class NASNetLargeModel(CNNClassificationModel):
+class NASNetLargeModel(SingleInputCNNModel):
 
     def build(self) -> Model:
         model = NASNetLarge(

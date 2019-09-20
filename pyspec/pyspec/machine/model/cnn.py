@@ -270,6 +270,33 @@ class CNNClassificationModel(ABC):
 
         return dataframe
 
+    def get_model(self, input):
+        m = self.build()
+        m.load_weights(self.get_model_file(input))
+        return m
+
+    @abstractmethod
+    def predict_from_spectra(self, input: str, spectra: Spectra, encoder: Encoder) -> str:
+        """
+        predicts the class from the given spectra
+        :param spectra:
+        :return:
+        """
+
+    def get_name(self) -> str:
+
+        """
+        returns the name of this model, by default this is the concrete class name
+        :return:
+        """
+        return "{}_bs_{}".format(self.__class__.__name__, self.batch_size)
+
+
+class SingleInputCNNModel(CNNClassificationModel, ABC):
+    """
+    works on a single input
+    """
+
     def predict_from_files(self, input: str, files: List[str]) -> List[Tuple[str, str]]:
         """
         predicts from a list of files and returns a list of tuples
@@ -338,11 +365,6 @@ class CNNClassificationModel(ABC):
                 cat = np.argmax(predict, axis=-1)[0]
                 callback(file, cat, full_path=f)
 
-    def get_model(self, input):
-        m = self.build()
-        m.load_weights(self.get_model_file(input))
-        return m
-
     def predict_from_spectra(self, input: str, spectra: Spectra, encoder: Encoder) -> str:
         """
         predicts the class from the given spectra
@@ -361,10 +383,8 @@ class CNNClassificationModel(ABC):
         y_classes = y_proba.argmax(axis=-1)
         return y_classes[0]
 
-    def get_name(self) -> str:
 
-        """
-        returns the name of this model, by default this is the concrete class name
-        :return:
-        """
-        return "{}_bs_{}".format(self.__class__.__name__, self.batch_size)
+class MultiInputCNNModel(CNNClassificationModel, ABC):
+    """
+    supports multiple inputs
+    """

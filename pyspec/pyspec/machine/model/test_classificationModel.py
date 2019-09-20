@@ -5,7 +5,7 @@ from tabulate import tabulate
 
 from pyspec.loader import Spectra
 from pyspec.machine.labels.generate_labels import DirectoryLabelGenerator
-from pyspec.machine.model.cnn import CNNClassificationModel
+from pyspec.machine.model.cnn import CNNClassificationModel, SingleInputCNNModel
 from pyspec.machine.spectra import Encoder, DualEncoder
 
 batchsizes = [
@@ -41,14 +41,14 @@ def test_train(model, dataset, gpu, batchsize):
 
     generator = DirectoryLabelGenerator()
     try:
-        result = model.train(input="datasets/{}".format(dataset), generator=generator, epochs=epochs,gpus=gpu)
+        result = model.train(input="datasets/{}".format(dataset), generator=generator, epochs=epochs, gpus=gpu)
     finally:
         del model
         from keras import backend as K
         K.clear_session()
 
 
-def init_model(model, gpus, batchsize) -> CNNClassificationModel:
+def init_model(model, gpus, batchsize) -> SingleInputCNNModel:
     class_ = getattr(importlib.import_module("pyspec.machine.model.application"), model)
     model = class_(width=100, height=100, channels=3, plots=True, batch_size=batchsize)
     return model
