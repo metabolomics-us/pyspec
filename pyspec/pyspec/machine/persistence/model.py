@@ -21,8 +21,12 @@ class MZMLSampleRecord(Model):
 
     """
 
+    # complete path
     file_name = CharField(unique=True)
 
+    # shortened name
+    name = CharField()
+    
     instrument = CharField()
 
     class Meta:

@@ -35,7 +35,7 @@ class MZMLtoPostgresConverter:
                         # object doesn't exist
                         pass
                     # 2. create sample object
-                    MZMLSampleRecord.create(file_name=file_name, instrument="")
+                    MZMLSampleRecord.create(file_name=file_name, instrument="",name = file_name.split("/")[-1])
 
                 else:
                     # 3. load sample object
