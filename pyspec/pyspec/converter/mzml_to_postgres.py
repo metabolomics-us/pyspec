@@ -35,23 +35,33 @@ class MZMLtoPostgresConverter:
                         # object doesn't exist
                         pass
                     # 2. create sample object
-                    MZMLSampleRecord.create(file_name=file_name, instrument="",name = file_name.split("/")[-1])
+                    MZMLSampleRecord.create(file_name=file_name, instrument="", name=file_name.split("/")[-1])
 
                 else:
                     # 3. load sample object
                     record = MZMLSampleRecord.get(MZMLSampleRecord.file_name == file_name)
                     # 3. associated msms spectra to it
 
-                    # 4. commit transaction
-                    highest = msms.highest_peaks(1)[0]
-                    spectra = msms.convert(msms).spectra
+                    try:
+                        # 4. commit transaction
+                        highest = msms.highest_peaks(1)[0]
+                        spectra = msms.convert(msms).spectra
+                        precurosr = msms.selected_precursors[0] if len(msms.selected_precursors) > 0 else {}
 
-                    splash = Splash().splash(Spectrum(spectra, SpectrumType.MS))
+                        splash = Splash().splash(Spectrum(spectra, SpectrumType.MS))
 
-                    spectra = MZMLMSMSSpectraRecord.create(sample=record, msms=spectra, rt=msms.scan_time[0],
-                                                           splash=splash,
-                                                           level=msms.ms_level, base_peak=highest[0],
-                                                           base_peak_intensity=highest[1],
-                                                           ion_count=len(msms.peaks("centroided")))
+                        spectra = MZMLMSMSSpectraRecord.create(sample=record, msms=spectra, rt=msms.scan_time[0],
+                                                               splash=splash,
+                                                               level=msms.ms_level, base_peak=highest[0],
+                                                               base_peak_intensity=highest[1],
+                                                               precursor=precurosr['mz'] if 'mz' in precurosr else 0,
+                                                               precursor_intensity=precurosr[
+                                                                   'i'] if 'i' in precurosr else 0,
+                                                               precursor_charge=precurosr[
+                                                                   'charge'] if 'charge' in precurosr else 0,
+                                                               ion_count=len(msms.peaks("centroided")))
+                    except IndexError as e:
+                        # not able to find highest peak
+                        pass
 
         finder.locate(msmsSource=input, callback=callback, filters=[MSMinLevelFilter(2)])

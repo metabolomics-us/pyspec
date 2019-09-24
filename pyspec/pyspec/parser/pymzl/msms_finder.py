@@ -1,4 +1,5 @@
 import os
+import traceback
 from typing import List, Optional
 
 import math
@@ -49,7 +50,7 @@ class MSMSFinder:
             reader = pymzml.run.Reader(file_name)
         except Exception as e:
 
-            file_name = self.download_rawdata(msmsSource, "data",force=True)
+            file_name = self.download_rawdata(msmsSource, "data", force=True)
             reader = pymzml.run.Reader(file_name)
 
         def evaluate(spectra):
@@ -78,9 +79,12 @@ class MSMSFinder:
             spectra.estimatedNoiseLevel()
             spectra.remove_noise()
 
-            evaluate(spectra)
+            try:
+                evaluate(spectra)
+            except Exception as e:
+                traceback.print_exc()
 
-    def download_rawdata(self, source, dir: str = "data", force:bool = False):
+    def download_rawdata(self, source, dir: str = "data", force: bool = False):
         """
         downloads a rawdata file and stores it in the local directory
         :param source:

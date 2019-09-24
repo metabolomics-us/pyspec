@@ -22,11 +22,12 @@ class MZMLtoCSVConverter:
             out.write("Level;Basepeak;Basepeak Intensity;Time;Splash;MSMS\n")
 
             def callback(msms: PySpectrum, file_name: str):
-                highest = msms.highest_peaks(1)[0]
-                spectra = msms.convert(msms).spectra
-                splash = Splash().splash(Spectrum(spectra, SpectrumType.MS))
-                out.write(
-                    "{};{};{};{};{};{}\n".format(msms.ms_level, highest[0], highest[1], msms.scan_time[0], splash,
-                                                 spectra))
+                if msms is not None:
+                    highest = msms.highest_peaks(1)[0]
+                    spectra = msms.convert(msms).spectra
+                    splash = Splash().splash(Spectrum(spectra, SpectrumType.MS))
+                    out.write(
+                        "{};{};{};{};{};{}\n".format(msms.ms_level, highest[0], highest[1], msms.scan_time[0], splash,
+                                                     spectra))
 
             finder.locate(msmsSource=input, callback=callback, filters=[MSMinLevelFilter(2)])

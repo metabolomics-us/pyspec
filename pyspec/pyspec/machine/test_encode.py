@@ -33,7 +33,8 @@ def test_encode_msms(source):
 
     def callback(msms: Spectrum, file_name: str):
         nonlocal data
-        data.append(msms.convert(msms))
+        if msms is not None:
+            data.append(msms.convert(msms))
 
     finder.locate(msmsSource=source, callback=callback, filters=[MSMinLevelFilter(2)])
 

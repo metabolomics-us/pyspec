@@ -26,11 +26,14 @@ class MZMLSampleRecord(Model):
 
     # shortened name
     name = CharField()
-    
+
     instrument = CharField()
 
     class Meta:
         database = db
+        indexes = (
+            (('name'), False)
+        )
 
 
 class MZMLMSMSSpectraRecord(Model):
@@ -46,6 +49,12 @@ class MZMLMSMSSpectraRecord(Model):
 
     rt = DoubleField()
 
+    precursor = DoubleField()
+
+    precursor_intensity = DoubleField()
+
+    precursor_charge = IntegerField()
+
     base_peak = DoubleField()
 
     base_peak_intensity = DoubleField()
@@ -55,28 +64,25 @@ class MZMLMSMSSpectraRecord(Model):
     level = IntegerField()
 
     class Meta:
+        indexes = (
+            (('splash'), False)
+        )
         database = db
 
 
-class MZMLMSMSSpectraCleanDirtyClassificationRecord(Model):
+class MZMZMSMSSpectraClassificationRecord(Model):
     """
     classification record if a spectra is clean or dirty
     """
 
     # linked spectra
-    spectra = ForeignKeyField(MZMLMSMSSpectraRecord, backref='classification_dirty', on_delete='cascade')
+    spectra = ForeignKeyField(MZMLMSMSSpectraRecord, backref='classification', on_delete='cascade')
 
     # is this a predicted value
     predicted = BooleanField(default=False)
 
-    # if it is a predicted value, which model was used
-    model = CharField()
-
-    # if it is a predicted value, which encoder was used
-    encoder = CharField()
-
     # is this spectra clean or dirty
-    dirty = BooleanField()
+    category = CharField
 
     class Meta:
         database = db
