@@ -26,12 +26,12 @@ class DatesetToPostgresConverter:
         test = "{}/{}".format(file, "test")
         train = "{}/{}".format(file, "train")
 
-        count = self._generate_classification_record(test)
-        count += self._generate_classification_record(train)
+        count = self._generate_classification_record(test, dataset)
+        count += self._generate_classification_record(train, dataset)
 
         return count
 
-    def _generate_classification_record(self, dir: str) -> int:
+    def _generate_classification_record(self, dir: str, category: str) -> int:
         """
         generates a new classification record
         :param dir: 
@@ -41,23 +41,32 @@ class DatesetToPostgresConverter:
         count = 0
 
         with db.atomic():
-            for category in os.listdir(dir):
-                for file in iglob("{}/{}/**/*.png".format(dir, category), recursive=True):
+            for value in os.listdir(dir):
+                for file in iglob("{}/{}/**/*.png".format(dir, value), recursive=True):
                     name = file.split("/")[-1].split(".")[0]
 
                     try:
-                        spectra = MZMLMSMSSpectraRecord.get(MZMLMSMSSpectraRecord.splash == name)
-
-                        try:
-                            MZMZMSMSSpectraClassificationRecord.get(
-                                MZMZMSMSSpectraClassificationRecord.spectra == spectra,
-                                MZMZMSMSSpectraClassificationRecord.category == category).delete()
-                        except DoesNotExist as e:
-                            pass
-
-                        MZMZMSMSSpectraClassificationRecord.replace(spectra=spectra, category=category)
+                        self.classify(category, name, value)
                         count += 1
                     except DoesNotExist as e:
                         pass
 
         return count
+
+    @staticmethod
+    def classify(category: str, splash: str, value: str):
+        """
+        stores a classification record or overwrites it
+        :param category:
+        :param splash: linked MSMS spectra, yes it's not 100% unique...
+        :param value:
+        :return:
+        """
+        spectra = MZMLMSMSSpectraRecord.get(MZMLMSMSSpectraRecord.splash == splash)
+        try:
+            MZMZMSMSSpectraClassificationRecord.get(
+                MZMZMSMSSpectraClassificationRecord.spectra == spectra,
+                MZMZMSMSSpectraClassificationRecord.category == category).delete()
+        except DoesNotExist as e:
+            pass
+        MZMZMSMSSpectraClassificationRecord.create(spectra=spectra, category=category, value=value)

@@ -81,8 +81,11 @@ class MZMZMSMSSpectraClassificationRecord(Model):
     # is this a predicted value
     predicted = BooleanField(default=False)
 
-    # is this spectra clean or dirty
-    category = CharField
+    # category of the classification
+    category = CharField()
+
+    # value of the classification
+    value = CharField()
 
     class Meta:
         database = db
