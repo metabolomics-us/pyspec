@@ -1,5 +1,3 @@
-from unittest import TestCase
-
 from pyspec.converter.dataset_to_postgres import DatesetToPostgresConverter
 
 
