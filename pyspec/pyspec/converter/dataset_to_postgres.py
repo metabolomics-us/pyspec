@@ -1,5 +1,4 @@
 import os
-import traceback
 from glob import iglob
 
 from peewee import DoesNotExist
@@ -16,9 +15,9 @@ class DatesetToPostgresConverter:
     def __init__(self):
         db.create_tables([MZMLSampleRecord, MZMLMSMSSpectraRecord, MZMZMSMSSpectraClassificationRecord])
 
-    def convert_clean_dirty(self, dataset: str, folder: str = "datasets"):
+    def convert_dataset(self, dataset: str, folder: str = "datasets") -> int:
         """
-        converts a clean dirty dataset to a postgres dataset, assuming the
+        converts a dataset to a postgres dataset, assuming the
         linked splashes exist in the database already. Otherwise they will be skipped
         :param dataset: 
         :return: 
@@ -27,10 +26,20 @@ class DatesetToPostgresConverter:
         test = "{}/{}".format(file, "test")
         train = "{}/{}".format(file, "train")
 
-        self._generate_clean_dirt_record(test)
-        self._generate_clean_dirt_record(train)
+        count = self._generate_classification_record(test)
+        count += self._generate_classification_record(train)
 
-    def _generate_clean_dirt_record(self, dir: str):
+        return count
+
+    def _generate_classification_record(self, dir: str) -> int:
+        """
+        generates a new classification record
+        :param dir: 
+        :return: 
+        """
+
+        count = 0
+
         with db.atomic():
             for category in os.listdir(dir):
                 for file in iglob("{}/{}/**/*.png".format(dir, category), recursive=True):
@@ -38,6 +47,17 @@ class DatesetToPostgresConverter:
 
                     try:
                         spectra = MZMLMSMSSpectraRecord.get(MZMLMSMSSpectraRecord.splash == name)
-                        MZMZMSMSSpectraClassificationRecord.create(spectra=spectra, category=category)
+
+                        try:
+                            MZMZMSMSSpectraClassificationRecord.get(
+                                MZMZMSMSSpectraClassificationRecord.spectra == spectra,
+                                MZMZMSMSSpectraClassificationRecord.category == category).delete()
+                        except DoesNotExist as e:
+                            pass
+
+                        MZMZMSMSSpectraClassificationRecord.replace(spectra=spectra, category=category)
+                        count += 1
                     except DoesNotExist as e:
                         pass
+
+        return count
