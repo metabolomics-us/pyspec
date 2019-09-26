@@ -2,6 +2,7 @@ import os
 from glob import iglob
 
 from peewee import DoesNotExist
+from tqdm import tqdm
 
 from pyspec.machine.persistence.model import db, MZMLSampleRecord, MZMLMSMSSpectraRecord, \
     MZMZMSMSSpectraClassificationRecord
@@ -26,8 +27,7 @@ class DatesetToPostgresConverter:
         test = "{}/{}".format(file, "test")
         train = "{}/{}".format(file, "train")
 
-        count = self._generate_classification_record(test, dataset)
-        count += self._generate_classification_record(train, dataset)
+        count = self._generate_classification_record(train, dataset)
 
         return count
 
@@ -42,7 +42,8 @@ class DatesetToPostgresConverter:
 
         with db.atomic():
             for value in os.listdir(dir):
-                for file in iglob("{}/{}/**/*.png".format(dir, value), recursive=True):
+                for file in tqdm(iglob("{}/{}/**/*.png".format(dir, value), recursive=True),
+                                 desc="converting dataset path {}/{}".format(dir,value)):
                     name = file.split("/")[-1].split(".")[0]
 
                     try:
@@ -66,7 +67,9 @@ class DatesetToPostgresConverter:
         try:
             MZMZMSMSSpectraClassificationRecord.get(
                 MZMZMSMSSpectraClassificationRecord.spectra == spectra,
-                MZMZMSMSSpectraClassificationRecord.category == category).delete()
+                MZMZMSMSSpectraClassificationRecord.category == category,
+                MZMZMSMSSpectraClassificationRecord.predicted == False
+            ).delete()
         except DoesNotExist as e:
             pass
-        MZMZMSMSSpectraClassificationRecord.create(spectra=spectra, category=category, value=value)
+        MZMZMSMSSpectraClassificationRecord.create(spectra=spectra, category=category, value=value, predicted=False)
