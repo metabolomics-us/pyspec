@@ -1,4 +1,5 @@
 import os
+import traceback
 from glob import iglob
 
 from peewee import DoesNotExist
@@ -43,13 +44,14 @@ class DatesetToPostgresConverter:
         with db.atomic():
             for value in os.listdir(dir):
                 for file in tqdm(iglob("{}/{}/**/*.png".format(dir, value), recursive=True),
-                                 desc="converting dataset path {}/{}".format(dir,value)):
+                                 desc="converting dataset path {}/{}".format(dir, value)):
                     name = file.split("/")[-1].split(".")[0]
 
                     try:
                         self.classify(category, name, value)
                         count += 1
                     except DoesNotExist as e:
+                        # print("splash not found!")
                         pass
 
         return count
@@ -63,13 +65,15 @@ class DatesetToPostgresConverter:
         :param value:
         :return:
         """
+        # print("looking for {}".format(splash))
         spectra = MZMLMSMSSpectraRecord.get(MZMLMSMSSpectraRecord.splash == splash)
+        # print(spectra)
         try:
-            MZMZMSMSSpectraClassificationRecord.get(
+            deleted = MZMZMSMSSpectraClassificationRecord.get(
                 MZMZMSMSSpectraClassificationRecord.spectra == spectra,
                 MZMZMSMSSpectraClassificationRecord.category == category,
                 MZMZMSMSSpectraClassificationRecord.predicted == False
-            ).delete()
+            ).delete_instance()
         except DoesNotExist as e:
             pass
         MZMZMSMSSpectraClassificationRecord.create(spectra=spectra, category=category, value=value, predicted=False)

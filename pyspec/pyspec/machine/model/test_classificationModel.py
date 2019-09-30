@@ -60,7 +60,7 @@ def init_model(model, gpus, batchsize) -> SingleInputCNNModel:
 def test_predict_from_dataframe(model, dataset, batchsize):
     model = init_model(model, 1, batchsize)
     generator = DirectoryLabelGenerator()
-    test_df = generator.generate_test_dataframe("datasets/{}".format(dataset), abs=True)
+    test_df = generator.generate_dataframe("datasets/{}".format(dataset))[1]
     result = model.predict_from_dataframe(dataframe=test_df, input="datasets/{}".format(dataset))
     print(tabulate(result, headers='keys'))
 

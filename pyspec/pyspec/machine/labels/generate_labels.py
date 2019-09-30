@@ -4,8 +4,10 @@ from abc import abstractmethod
 from glob import iglob
 from typing import Tuple
 
-import tabulate
-from pandas import DataFrame
+from pandas import DataFrame, read_sql, read_sql_query
+
+from pyspec.machine.persistence.model import db, MZMLSampleRecord, MZMLMSMSSpectraRecord, \
+    MZMZMSMSSpectraClassificationRecord
 
 
 class LabelGenerator:
@@ -48,10 +50,13 @@ class LabelGenerator:
         self.generate_labels(input, callback, training=False)
 
         training = DataFrame(list(filter(lambda x: x['training'] is True, data)))
-        testing = DataFrame(list(filter(lambda x: x['training'] is True, data)))
+        testing = DataFrame(list(filter(lambda x: x['training'] is False, data)))
 
-        print(tabulate.tabulate(training,headers='keys'))
         return training, testing
+
+    def returns_multiple(self):
+        "do we return multiple fields for our 'file' column and the model needs to flatten it"
+        return False
 
     def is_file_based(self) -> bool:
         """
@@ -60,7 +65,7 @@ class LabelGenerator:
         """
         return True
 
-    def to_csv(self, input: str, file_name: str,training:bool):
+    def to_csv(self, input: str, file_name: str, training: bool):
         """
         reads all the images, and saves them as a CSV file
         :param input: from where to load the data
@@ -99,7 +104,7 @@ class DirectoryLabelGenerator(LabelGenerator):
 
         for category in os.listdir(data):
             for file in iglob("{}/{}/**/*.png".format(data, category), recursive=True):
-                callback(file, category,training)
+                callback(file, category, training)
 
 
 class CSVLabelGenerator(LabelGenerator):
@@ -121,7 +126,8 @@ class CSVLabelGenerator(LabelGenerator):
 
             row = next(reader)
 
-            assert len(row) >= 2, "please ensure you have more than 2 columns!, But given where {}, '{}'".format(len(row),row)
+            assert len(row) >= 2, "please ensure you have more than 2 columns!, But given where {}, '{}'".format(
+                len(row), row)
 
             if row[0] == self.field_category:
                 c = 0
@@ -141,8 +147,63 @@ class CSVLabelGenerator(LabelGenerator):
                 else:
                     raise Exception("sorry we did not find the file: {} or {}/{}".format(row[f], input, row[f]))
 
-                callback(file, row[c],training)
+                callback(file, row[c], training)
 
     def __init__(self, field_id: str = "file", field_category: str = "class"):
         self.field_id = field_id
         self.field_category = field_category
+
+
+class MachineDBDataSetGenerator(LabelGenerator):
+    """
+    generates a dataset based on the PeeWee domain classes. Query is done direcly as SQL to reduce overhead
+    """
+
+    def __init__(self, fields=['msms']):
+        """
+
+        :param fields: which fields you want to select and map. If more than one, the result fieled in the dataframe, will be a list!
+        """
+
+        db.create_tables([MZMLSampleRecord, MZMLMSMSSpectraRecord, MZMZMSMSSpectraClassificationRecord])
+        self.fields = fields
+
+    def generate_labels(self, input: str, callback, training: bool):
+        """
+        input is the name of dataset, example 'clean_dirty' which translates to the column 'category' in the database
+        :param input:
+        :param callback:
+        :param training:
+        :return:
+        """
+        input = input.split("/")[-1]
+
+        result = read_sql_query(
+            "select a.*, b.value as class from  mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and category = '{}'".format(
+                input),
+            db.connection())
+
+        for index, row in result.iterrows():
+            data = []
+
+            for y in self.fields:
+                data.append(row[y])
+
+            if len(data) > 1:
+                callback(
+                    id=data,
+                    category=row['class'],
+                    training=training
+                )
+            else:
+                callback(
+                    id=data[0],
+                    category=row['class'],
+                    training=training
+                )
+
+    def returns_multiple(self):
+        return len(self.fields) > 1
+
+    def is_file_based(self) -> bool:
+        return False
