@@ -2,7 +2,7 @@ import csv
 import os
 from abc import abstractmethod
 from glob import iglob
-from typing import Tuple
+from typing import Tuple, Optional, List
 
 from pandas import DataFrame, read_sql, read_sql_query
 
@@ -26,7 +26,14 @@ class LabelGenerator:
         :return:
         """
 
-    def generate_dataframe(self, input: str) -> Tuple[DataFrame, DataFrame]:
+    def contains_test_data(self) -> bool:
+        """
+        does the label generator provide it's own test data
+        :return:
+        """
+        return True
+
+    def generate_dataframe(self, input: str) -> Tuple[DataFrame, Optional[DataFrame]]:
         """
         generates a dataframe for the given input with all the internal labels. This will be used for training and validation
         :param input:
@@ -50,7 +57,11 @@ class LabelGenerator:
         self.generate_labels(input, callback, training=False)
 
         training = DataFrame(list(filter(lambda x: x['training'] is True, data)))
-        testing = DataFrame(list(filter(lambda x: x['training'] is False, data)))
+
+        if self.contains_test_data():
+            testing = DataFrame(list(filter(lambda x: x['training'] is False, data)))
+        else:
+            testing = None
 
         return training, testing
 
@@ -168,6 +179,13 @@ class MachineDBDataSetGenerator(LabelGenerator):
         db.create_tables([MZMLSampleRecord, MZMLMSMSSpectraRecord, MZMZMSMSSpectraClassificationRecord])
         self.fields = fields
 
+    def get_fields(self) -> List[str]:
+        """
+        the fields which are returned under the 'id' as list, if more than 1
+        :return:
+        """
+        return self.fields
+
     def generate_labels(self, input: str, callback, training: bool):
         """
         input is the name of dataset, example 'clean_dirty' which translates to the column 'category' in the database
@@ -203,7 +221,22 @@ class MachineDBDataSetGenerator(LabelGenerator):
                 )
 
     def returns_multiple(self):
+        """
+        yes we can return multiple data inputs
+        :return:
+        """
         return len(self.fields) > 1
 
     def is_file_based(self) -> bool:
+        """
+        nope not based on files
+        :return:
+        """
+        return False
+
+    def contains_test_data(self) -> bool:
+        """
+        we don't have predefined test data, need to generate them your self using splits
+        :return:
+        """
         return False
