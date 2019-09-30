@@ -9,7 +9,7 @@ from keras.callbacks import ModelCheckpoint, TensorBoard
 from keras.utils import multi_gpu_model
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras_preprocessing.image import ImageDataGenerator
 from pyspec.loader import Spectra
@@ -75,7 +75,8 @@ class CNNClassificationModel(ABC):
         sess = tf.Session(config=config)
         return sess
 
-    def train(self, input: str, generator: LabelGenerator, test_size=0.20, epochs=5, gpus=None, verbose=1):
+    def train(self, input: str, generator: LabelGenerator, test_size: Optional[float] = 0.20, epochs=5, gpus=None,
+              verbose=1):
         """
         trains a model for us, based on the input
         :param input:
@@ -93,11 +94,7 @@ class CNNClassificationModel(ABC):
         callbacks = [learning_rate_reduction]
 
         self.configure_checkpoints(callbacks, gpus, input, verbose)
-        dataframe = generator.generate_dataframe(input)
-
-        assert dataframe['file'].apply(lambda x: os.path.exists(x)).all(), 'please ensure all files exist!'
-
-        train_df, validate_df = train_test_split(dataframe, test_size=test_size, random_state=42)
+        train_df, validate_df = self.generate_dataset(generator, input, test_size)
         train_df = train_df.reset_index(drop=True)
         validate_df = validate_df.reset_index(drop=True)
 
@@ -137,6 +134,23 @@ class CNNClassificationModel(ABC):
         del model
         from keras import backend as K
         K.clear_session()
+
+    def generate_dataset(self, generator, input, test_size: Optional[float] = None):
+        """
+        generates the test and training data for us
+        :param generator:
+        :param input:
+        :param test_size:
+        :return:
+        """
+        dataframe = generator.generate_dataframe(input)
+
+        # use pre defined split of the data
+        if test_size is None:
+            return dataframe[0], dataframe[1]
+        else:
+            # assume we need to split the data
+            return train_test_split(dataframe[0], test_size=test_size, random_state=42)
 
     def generate_validation_generator(self, validate_df: DataFrame):
         """

@@ -13,22 +13,13 @@ folder = "datasets"
 @pytest.mark.parametrize("generator", generators)
 @pytest.mark.parametrize("dataset", datasets)
 def test_generate_dataframe(generator, dataset):
-    result = generator.generate_dataframe("{}/{}".format(folder, dataset[0]))
+    results = generator.generate_dataframe("{}/{}".format(folder, dataset[0]))
 
+    assert len(results) == 2
     # ensure all reported files exist
-    assert result['file'].apply(lambda x: os.path.exists(x)).all()
-    assert result.shape == (dataset[1], 2)
-    generator.to_csv("{}/{}".format(folder, dataset[0]), "{}/{}/train.csv".format(folder, dataset[0]))
+    assert results[0]['file'].apply(lambda x: os.path.exists(x)).all()
+    assert results[0].shape == (dataset[1], 3)
+    generator.to_csv("{}/{}".format(folder, dataset[0]), "{}/{}/train.csv".format(folder, dataset[0]),training=True)
 
-
-@pytest.mark.parametrize("generator", generators)
-@pytest.mark.parametrize("dataset", datasets)
-def test_generate_test_dataframe(generator, dataset):
-    result = generator.generate_test_dataframe("{}/{}".format(folder, dataset[0]))
-    assert result['file'].apply(lambda x: os.path.exists(x)).all()
-    assert result.shape == (dataset[2], 1)
-
-    import pandas as pd
-    pd.set_option('display.max_columns', 30)
-    pd.set_option("display.max_colwidth", 10000)
-
+    assert results[1]['file'].apply(lambda x: os.path.exists(x)).all()
+    assert results[1].shape == (dataset[1], 3)
