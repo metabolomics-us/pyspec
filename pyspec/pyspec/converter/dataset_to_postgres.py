@@ -29,6 +29,7 @@ class DatesetToPostgresConverter:
         train = "{}/{}".format(file, "train")
 
         count = self._generate_classification_record(train, dataset)
+        count = self._generate_classification_record(test, dataset) + count
 
         return count
 

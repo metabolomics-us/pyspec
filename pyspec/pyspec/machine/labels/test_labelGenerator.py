@@ -16,9 +16,11 @@ folder = "datasets"
 def test_generate_dataframe(generator, dataset):
     results = generator.generate_dataframe("{}/{}".format(folder, dataset[0]))
 
-#    print(tabulate.tabulate(results[0], headers='keys'))
+    #    print(tabulate.tabulate(results[0], headers='keys'))
     assert len(results) == 2
     # ensure all reported files exist
     assert results[0].shape == (dataset[1], dataset[3])
-    assert results[1]['file'].apply(lambda x: os.path.exists(x)).all()
-    assert results[1].shape == (dataset[2], dataset[3])
+
+    # check the size of the loaded test data if applies
+    if generator.contains_test_data():
+        assert results[1].shape == (dataset[2], dataset[3])
