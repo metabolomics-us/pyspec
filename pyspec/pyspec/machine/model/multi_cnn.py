@@ -2,6 +2,7 @@ from keras import Model
 from pandas import DataFrame
 
 from pyspec.loader import Spectra
+from pyspec.machine.labels.generate_labels import LabelGenerator
 from pyspec.machine.model.cnn import MultiInputCNNModel
 from pyspec.machine.spectra import Encoder
 import numpy as np
@@ -15,11 +16,11 @@ class SimpleMultiCNNModel(MultiInputCNNModel):
     def build(self) -> Model:
         pass
 
-    def generate_validation_generator(self, validate_df: DataFrame):
-        return super().generate_validation_generator(validate_df)
+    def generate_validation_generator(self, validate_df: DataFrame, generator:LabelGenerator):
+        return super().generate_validation_generator(validate_df,generator)
 
-    def generate_training_generator(self, train_df: DataFrame):
-        return super().generate_training_generator(train_df)
+    def generate_training_generator(self, train_df: DataFrame, generator:LabelGenerator):
+        return super().generate_training_generator(train_df,generator)
 
     def predict_from_spectra(self, input: str, spectra: Spectra, encoder: Encoder) -> str:
         """

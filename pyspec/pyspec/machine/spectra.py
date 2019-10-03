@@ -1,27 +1,31 @@
 from abc import abstractmethod
+from typing import List, Optional, Any, Tuple
 
 import matplotlib.pyplot as plt
-from typing import List, Optional
 
 plt.style.use('seaborn-white')
 import math
 import pandas as pd
 from pyspec.loader import Spectra
 
-import pathlib
-from splash import Spectrum, SpectrumType, Splash
-
 
 class Encoder:
     """
-    class to easily encode spectra into a graphical form, to be used for machine learning. The encoded spectra can be automaticall
-    persited to a directory, if it has been provided
+    encodes incomming data in a graphic representation
     """
 
     def __init__(self, width=512, height=512, min_mz=0, max_mz=2000, plot_axis=False, intensity_max=1000, dpi=72,
                  directory: Optional = None):
         """
-            inits the encoder with some standard settings
+
+        :param width: width in pixel
+        :param height: height in pixel
+        :param min_mz: min mass
+        :param max_mz: max mass
+        :param plot_axis: do we want to plot axes
+        :param intensity_max: max intensity
+        :param dpi: resolution
+        :param directory: optional directory where to store encoded data. If none just the string will be returned.
         """
         self.width = width
         self.height = height
@@ -30,20 +34,8 @@ class Encoder:
         self.axis = plot_axis
         self.intensity_max = intensity_max
         self.dpi = dpi
-        self.directory = directory
 
-    @property
-    def directory(self):
-        return self.__directory
-
-    @directory.setter
-    def directory(self, directory):
-        self.__directory = directory
-
-        if self.directory is not None:
-            pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
-
-    def encode(self, spec: Spectra, prefix: str = None, store_meta: bool = False) -> str:
+    def encode(self, spec: Spectra) -> Tuple[str, Any]:
         """
         encodes a spectra to a string in graphical form
         :param spec:
@@ -51,15 +43,15 @@ class Encoder:
         :param store_meta:
         :return:
         """
-        return self._encode(spec, prefix, store_meta)
+        return self._encode(spec)
 
-    def _encode(self, spec: Spectra, prefix: str = None, store_meta: bool = False):
+    def _encode(self, spec: Spectra) -> Tuple[str, List[Any]]:
         """
         encodes the given spectra
         :param spec: spectra
         :param prefix: prefix
         :param store_meta: do you also want to store the spectra string for each spectra?
-        :return: an image representation of the encoded spectra in form of a string
+        :return: encoded string of the spectra as first element, 2nd element is a list of additional computed values
         """
         # dumb approach to find max mz
         data = []
@@ -106,26 +98,6 @@ class Encoder:
             fig.canvas.draw()
 
             spectra_string = fig.canvas.tostring_rgb()
-
-            if self.directory is not None:
-                name = Splash().splash(Spectrum(spec.spectra, SpectrumType.MS))
-                plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
-
-                directory = self.directory if prefix is None else "{}/{}".format(self.directory, prefix)
-                pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
-                plt.savefig("{}/{}.png".format(directory, name), dpi=self.dpi)
-
-                plt.close(fig=fig)
-
-                if store_meta:
-                    with open("{}/{}.meta".format(directory, name), 'w') as the_file:
-                        the_file.write("spectra\t{}\n".format(spec.spectra))
-                        the_file.write("level\t{}\n".format(spec.ms_level))
-                        the_file.write("intensity\y{}\n".format(dataframe['intensity'].max()))
-                        the_file.write("splash\t{}\n".format(name))
-
-                return None
-
             return spectra_string
         except ValueError:
             pass
@@ -139,60 +111,10 @@ class Encoder:
         :return:
         """
 
-    def encodes(self, spectra: List[Spectra]):
-        """
-        encodes a spectra as picture. Conceptually wise
-        we will render 3 dimensions
-
-        x is MZ as nominal
-        y is MZ as accurate
-        z is intensity between 0 and 100
-        :param spectra:
-        :return:
-        """
-
-        for spec in spectra:
-            plt = self.encode(spec)
-
 
 class DualEncoder(Encoder):
     """
     this encoder encodes the data in form of 2 charts. 1 chart the actual spectra and the other a heatmap of accuracies
-    """
-
-    def _encode_dataframe(self, dataframe, fig):
-        """
-        encodes the given dataframe on the figure in form of a graphic
-        :param dataframe:
-        :param fig:
-        :return:
-        """
-        widths = [1]
-        heights = [16, 16, 1]
-        specs = fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
-        ax0 = plt.subplot(specs[0, 0])
-        ax1 = plt.subplot(specs[1, 0])
-        ax2 = plt.subplot(specs[2, 0])
-        ax0.scatter(dataframe['nominal'], dataframe['frac'], c=dataframe['intensity_min_max'], vmin=0, vmax=1, s=1)
-        ax0.set_xlim(self.min_mz, self.max_mz)
-        ax0.set_ylim(0, 1)
-        ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black',
-                 use_line_collection=True)
-        ax1.set_xlim(self.min_mz, self.max_mz)
-        ax1.set_ylim(0, 1)
-        ax1.spines['top'].set_visible(False)
-        ax1.spines['right'].set_visible(False)
-        ax2.barh("intensity", dataframe['intensity'].max(), align='center', color='black')
-        ax2.set_xlim(0, self.intensity_max)
-        if not self.axis:
-            ax0.axis('off')
-            ax1.axis('off')
-            ax2.axis('off')
-
-
-class HeatMapEncoder(Encoder):
-    """
-    encodes the spectra in form of a heatmap
     """
 
     def _encode_dataframe(self, dataframe, fig):

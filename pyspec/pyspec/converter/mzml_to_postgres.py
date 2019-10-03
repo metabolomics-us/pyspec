@@ -45,13 +45,15 @@ class MZMLtoPostgresConverter:
                     try:
                         # 4. commit transaction
                         highest = msms.highest_peaks(1)[0]
-                        spectra = msms.convert(msms).spectra
+                        spectra = msms.convert(msms, mode="raw").spectra
                         precurosr = msms.selected_precursors[0] if len(msms.selected_precursors) > 0 else {}
+                        scannumber = msms.index
 
                         splash = Splash().splash(Spectrum(spectra, SpectrumType.MS))
 
                         spectra = MZMLMSMSSpectraRecord.create(sample=record, msms=spectra, rt=msms.scan_time[0],
                                                                splash=splash,
+                                                               scan_number=scannumber,
                                                                level=msms.ms_level, base_peak=highest[0],
                                                                base_peak_intensity=highest[1],
                                                                precursor=precurosr['mz'] if 'mz' in precurosr else 0,

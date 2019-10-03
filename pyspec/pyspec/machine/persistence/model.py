@@ -63,6 +63,8 @@ class MZMLMSMSSpectraRecord(Model):
 
     level = IntegerField()
 
+    scan_number = IntegerField()
+
     class Meta:
         indexes = (
             (('splash'), False)

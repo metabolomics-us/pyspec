@@ -75,11 +75,18 @@ class CNNClassificationModel(ABC):
         sess = tf.Session(config=config)
         return sess
 
-    def train(self, input: str, generator: LabelGenerator, test_size: Optional[float] = 0.20, epochs=5, gpus=None,
+    def train(self, input: str, generator: LabelGenerator, encoder: Encoder, test_size: Optional[float] = 0.20,
+              epochs=5, gpus=None,
               verbose=1):
         """
-        trains a model for us, based on the input
-        :param input:
+
+        :param input: location to the input for the label generator
+        :param generator: which label generator to use
+        :param encoder: an encoder how to encode the loaded data
+        :param test_size: None, if label provider provides test/training data, otherwise a float between 0-1
+        :param epochs: how many epochs you would like to train for
+        :param gpus: None to use all gpus, otherwise a number
+        :param verbose: do you want verbose logging
         :return:
         """
         if gpus is None:
@@ -101,8 +108,8 @@ class CNNClassificationModel(ABC):
         total_train = train_df.shape[0]
         total_validate = validate_df.shape[0]
 
-        train_generator = self.generate_training_generator(train_df)
-        validation_generator = self.generate_validation_generator(validate_df)
+        train_generator = self.generate_training_generator(train_df, generator)
+        validation_generator = self.generate_validation_generator(validate_df, generator)
 
         set_session(self.configure_session())
         model = self.build()
@@ -135,7 +142,7 @@ class CNNClassificationModel(ABC):
         from keras import backend as K
         K.clear_session()
 
-    def generate_dataset(self, generator, input, test_size: Optional[float] = None):
+    def generate_dataset(self, generator: LabelGenerator, input: str, test_size: Optional[float] = None):
         """
         generates the test and training data for us
         :param generator:
@@ -148,11 +155,16 @@ class CNNClassificationModel(ABC):
         # use pre defined split of the data
         if test_size is None:
             return dataframe[0], dataframe[1]
+        elif generator.contains_test_data() is False:
+            if test_size is None:
+                # forcing a testsize
+                test_size = 0.2
+            return train_test_split(dataframe[0], test_size=test_size, random_state=42)
         else:
             # assume we need to split the data
             return train_test_split(dataframe[0], test_size=test_size, random_state=42)
 
-    def generate_validation_generator(self, validate_df: DataFrame):
+    def generate_validation_generator(self, validate_df: DataFrame, generator: LabelGenerator):
         """
         generates a validation generator for based on the validation dataframe
         :param validate_df:
@@ -170,7 +182,7 @@ class CNNClassificationModel(ABC):
         )
         return validation_generator
 
-    def generate_training_generator(self, train_df: DataFrame):
+    def generate_training_generator(self, train_df: DataFrame, generator: LabelGenerator):
         """
         generate a training generator for us based on the training data frame
         :param train_df:

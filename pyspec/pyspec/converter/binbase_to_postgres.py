@@ -83,7 +83,8 @@ class BinBasetoPostgresConverter:
                                                  precursor=0,
                                                  precursor_intensity=0,
                                                  precursor_charge=0,
-                                                 ion_count=len(spectrum))
+                                                 ion_count=len(spectrum),
+                                                 scan_number=int(s[1]))
 
                     if s[0] is not None:
                         DatesetToPostgresConverter.classify("bin_id", splash, s[0])

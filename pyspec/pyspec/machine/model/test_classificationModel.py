@@ -41,7 +41,8 @@ def test_train(model, dataset, gpu, batchsize):
 
     generator = DirectoryLabelGenerator()
     try:
-        result = model.train(input="datasets/{}".format(dataset), generator=generator, epochs=epochs, gpus=gpu)
+        result = model.train(input="datasets/{}".format(dataset), generator=generator, epochs=epochs, gpus=gpu,
+                             encoder=Encoder())
     finally:
         del model
         from keras import backend as K

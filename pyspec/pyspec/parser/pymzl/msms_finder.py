@@ -17,8 +17,8 @@ class MSMSFinder:
     finds all the MSMS spectra in the given file and if it's an url, download it first
     """
 
-    def toSpectra(self, spectra: Spectrum) -> Spectra:
-        peaks = spectra.peaks("centroided")
+    def toSpectra(self, spectra: Spectrum, mode: str = "centroided") -> Spectra:
+        peaks = spectra.peaks(mode)
 
         f = lambda x: "{}:{}".format(x[0], x[1])
         result = []
@@ -75,10 +75,9 @@ class MSMSFinder:
         for spectra in tqdm(reader, total=reader.get_spectrum_count(),
                             unit='spectra',
                             unit_scale=True, leave=True, desc=f"analyzing spectra in {file_name}"):
-            spectra: Spectrum = spectra
-            spectra.estimatedNoiseLevel()
-            spectra.remove_noise()
 
+            # DO NOT DO ANY modifications
+            spectra: Spectrum = spectra
             try:
                 evaluate(spectra)
             except Exception as e:
