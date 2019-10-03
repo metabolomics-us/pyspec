@@ -27,15 +27,7 @@ class MZMLtoPostgresConverter:
         def callback(msms: PySpectrum, file_name: str):
             with db.atomic() as transaction:
                 if msms is None:
-                    # 1. check if sample exist, if yes delete it
-                    try:
-                        record = MZMLSampleRecord.get(MZMLSampleRecord.file_name == file_name)
-                        record.delete_instance()
-                    except Exception:
-                        # object doesn't exist
-                        pass
-                    # 2. create sample object
-                    MZMLSampleRecord.create(file_name=file_name, instrument="", name=file_name.split("/")[-1])
+                    self.extract_record(file_name)
 
                 else:
                     # 3. load sample object
@@ -67,3 +59,19 @@ class MZMLtoPostgresConverter:
                         pass
 
         finder.locate(msmsSource=input, callback=callback, filters=[MSMinLevelFilter(2)])
+
+    def extract_record(self, file_name,instrument:str=""):
+        """
+        generates a database sample recorde
+        :param file_name:
+        :return:
+        """
+        # 1. check if sample exist, if yes delete it
+        try:
+            record = MZMLSampleRecord.get(MZMLSampleRecord.file_name == file_name)
+            record.delete_instance()
+        except Exception:
+            # object doesn't exist
+            pass
+        # 2. create sample object
+        MZMLSampleRecord.create(file_name=file_name, instrument=instrument, name=file_name.split("/")[-1])
