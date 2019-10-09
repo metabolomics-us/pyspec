@@ -29,7 +29,8 @@ class LCBinBaseToPostgresConverter:
             with gzip.open(file, 'r') as fin:
                 data = json.load(fin)
         else:
-            data = json.load(file)
+            with open(file) as f:
+                data = json.load(f)
 
         if 'spectra' in data:
             for x in tqdm(data['spectra'], desc="importing file {}".format(file)):
