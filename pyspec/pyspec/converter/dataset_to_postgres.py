@@ -66,15 +66,22 @@ class DatesetToPostgresConverter:
         :param value:
         :return:
         """
-        # print("looking for {}".format(splash))
-        spectra = MZMLMSMSSpectraRecord.get(MZMLMSMSSpectraRecord.splash == splash)
-        # print(spectra)
-        try:
-            deleted = MZMZMSMSSpectraClassificationRecord.get(
-                MZMZMSMSSpectraClassificationRecord.spectra == spectra,
-                MZMZMSMSSpectraClassificationRecord.category == category,
-                MZMZMSMSSpectraClassificationRecord.predicted == False
-            ).delete_instance()
-        except DoesNotExist as e:
-            pass
-        MZMZMSMSSpectraClassificationRecord.create(spectra=spectra, category=category, value=value, predicted=False)
+        with db.atomic():
+            try:
+                # print("looking for {}".format(splash))
+                spectra = MZMLMSMSSpectraRecord.get(MZMLMSMSSpectraRecord.splash == splash)
+                # print(spectra)
+                try:
+                    deleted = MZMZMSMSSpectraClassificationRecord.get(
+                        MZMZMSMSSpectraClassificationRecord.spectra == spectra,
+                        MZMZMSMSSpectraClassificationRecord.category == category,
+                        MZMZMSMSSpectraClassificationRecord.predicted == False
+                    ).delete_instance()
+                except DoesNotExist as e:
+                    pass
+                MZMZMSMSSpectraClassificationRecord.create(spectra=spectra, category=category, value=value,
+                                                           predicted=False)
+
+            except DoesNotExist as e:
+                pass
+

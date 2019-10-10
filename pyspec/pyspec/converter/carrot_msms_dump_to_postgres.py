@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from pyspec.converter.dataset_to_postgres import DatesetToPostgresConverter
 from pyspec.machine.persistence.model import db, MZMLSampleRecord, MZMLMSMSSpectraRecord, \
-    MZMZMSMSSpectraClassificationRecord
+    MZMZMSMSSpectraClassificationRecord, DoesNotExist
 
 
 class LCBinBaseToPostgresConverter:
@@ -32,11 +32,26 @@ class LCBinBaseToPostgresConverter:
             with open(file) as f:
                 data = json.load(f)
 
-        if 'spectra' in data:
-            for x in tqdm(data['spectra'], desc="importing file {}".format(file)):
-                if x['name'] != 'Unknown':
-                    DatesetToPostgresConverter.classify(category="origin", splash=x['raw splash'], value="lc-binbase")
-                    DatesetToPostgresConverter.classify(category="name", splash=x['raw splash'], value=x['name'])
-                    count = count + 1
+        try:
+            sample = MZMLSampleRecord.get(name=data['file'])
 
+            if 'spectra' in data:
+                for x in tqdm(data['spectra'], desc="importing file {}".format(file)):
+                    if x['name'] == 'Unknown':
+                        continue
+                    else:
+                        try:
+                            spectra = MZMLMSMSSpectraRecord.get(sample=sample, splash=x['raw splash'])
+                            spectra.ri = x['ri']
+                            spectra.save()
+
+                            DatesetToPostgresConverter.classify(category="origin", splash=x['raw splash'],
+                                                                value="lc-binbase")
+                            DatesetToPostgresConverter.classify(category="name", splash=x['raw splash'],
+                                                                value=x['name'])
+                            count = count + 1
+                        except DoesNotExist as e:
+                            pass
+        except DoesNotExist as e:
+            pass
         return count

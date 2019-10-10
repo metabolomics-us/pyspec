@@ -65,6 +65,8 @@ class MZMLMSMSSpectraRecord(Model):
 
     scan_number = IntegerField()
 
+    ri = DoubleField()
+
     class Meta:
         indexes = (
             (('splash'), False)
@@ -91,3 +93,6 @@ class MZMZMSMSSpectraClassificationRecord(Model):
 
     class Meta:
         database = db
+        indexes = (
+            (('category'), False)
+        )

@@ -60,12 +60,13 @@ class MZMLtoPostgresConverter:
 
         finder.locate(msmsSource=input, callback=callback, filters=[MSMinLevelFilter(2)])
 
-    def extract_record(self, file_name,instrument:str=""):
+    def extract_record(self, file_name, instrument: str = ""):
         """
         generates a database sample recorde
         :param file_name:
         :return:
         """
+
         # 1. check if sample exist, if yes delete it
         try:
             record = MZMLSampleRecord.get(MZMLSampleRecord.file_name == file_name)
@@ -74,4 +75,4 @@ class MZMLtoPostgresConverter:
             # object doesn't exist
             pass
         # 2. create sample object
-        MZMLSampleRecord.create(file_name=file_name, instrument=instrument, name=file_name.split("/")[-1])
+        MZMLSampleRecord.create(file_name=file_name, instrument=instrument, name=file_name.split("/")[-1].split(".")[0])
