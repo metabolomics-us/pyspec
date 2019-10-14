@@ -1,13 +1,17 @@
+import collections
 import math
 
 
+EPS_CORRECTION = 1.0e-6
+MZ_ROUND_CORRECTION = 0.2
 
-def transform_spectrum_tuple(spectrum):
+
+def _transform_spectrum_tuple(spectrum):
     s = [tuple(map(float, x.split(':'))) for x in spectrum.split()]
     return [x for x in s if x[1] > 0]
 
 
-def transform_spectrum(spectrum, nominal_bin=True, normalize=True, scale_function=None):
+def _transform_spectrum(spectrum, nominal_bin=True, normalize=True, scale_function=None):
     if type(spectrum) == str:
         spectrum = [x.split(':') for x in spectrum.split()]
 
@@ -36,9 +40,9 @@ def transform_spectrum(spectrum, nominal_bin=True, normalize=True, scale_functio
 
 def cosine_similarity(a, b):
     if type(a) in [str, list]:
-        a = transform_spectrum(a)
+        a = _transform_spectrum(a)
     if type(b) in [str, list]:
-        b = transform_spectrum(b)
+        b = _transform_spectrum(b)
 
     normA = sum(v * v for v in a.values())
     normB = sum(v * v for v in b.values())
@@ -53,9 +57,9 @@ def cosine_similarity(a, b):
 
 def composite_similarity(a, b):
     if type(a) == str:
-        a = transform_spectrum(a)
+        a = _transform_spectrum(a)
     if type(b) == str:
-        b = transform_spectrum(b)
+        b = _transform_spectrum(b)
     
     sharedIons = sorted(x for x in set(a.keys()) & set(b.keys()) if a[x] > EPS_CORRECTION and b[x] > EPS_CORRECTION)
     cosineSimilarity = cosine_similarity(a, b)
