@@ -1,11 +1,11 @@
 import csv
+import multiprocessing
 import os
 from abc import abstractmethod
 from glob import iglob
-from multiprocessing.pool import Pool
 from typing import Tuple, Optional, List
 
-from pandas import DataFrame, read_sql, read_sql_query
+from pandas import DataFrame, read_sql_query
 
 from pyspec.machine.persistence.model import db, MZMLSampleRecord, MZMLMSMSSpectraRecord, \
     MZMZMSMSSpectraClassificationRecord
@@ -289,6 +289,7 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
                 "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' LIMIT {}".format(
                     self.limit),
                 db.connection())
+
 
         def function(row):
             """
