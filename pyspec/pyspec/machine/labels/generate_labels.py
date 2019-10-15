@@ -1,5 +1,6 @@
 import csv
 import os
+import random
 from abc import abstractmethod
 from glob import iglob
 from typing import Tuple, Optional, List
@@ -305,7 +306,6 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         """
 
         # contains all spectra and compounds
-
         if self.limit is None:
             spectra = read_sql_query(
                 "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name'",
@@ -324,12 +324,13 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
             """
             try:
                 value = row.to_dict()
+
                 for x in range(0, self.resampling):
-                    random_spectra_same_compound = spectra.loc[
-                        (spectra['name'] == row['name']) & (spectra['spectra_id'] != row['spectra_id'])].sample(
-                        1).to_dict()
-                    random_spectra_different_compound = spectra.loc[(spectra['name'] != row['name'])].sample(
-                        1).to_dict()
+                    group_same_compound = groups.get_group(row['name'])
+                    random_spectra_same_compound = group_same_compound[group_same_compound['spectra_id'] != row['spectra_id']].sample(1)
+
+                    group_different_compound = random.choice([g for g in groups.groups.keys() if g != row['name']])
+                    random_spectra_different_compound = groups.get_group(group_different_compound).sample(1)
 
                     callback(
                         id=(value, random_spectra_same_compound),
@@ -345,6 +346,7 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
             except ValueError as e:
                 pass
 
+        groups = spectra.groupby(['name'])
         spectra.apply(function, axis=1)
         pass
 
