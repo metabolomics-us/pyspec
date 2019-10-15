@@ -1,12 +1,10 @@
-from unittest import TestCase
-
 import tabulate
 
 from pyspec.machine.labels.generate_labels import SimilarityDatasetLabelGenerator
 
 
 def test_generate_labels():
-    generator = SimilarityDatasetLabelGenerator()
+    generator = SimilarityDatasetLabelGenerator(limit=500)
 
     result = generator.generate_dataframe("not important")
 

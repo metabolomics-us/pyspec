@@ -16,7 +16,7 @@ sources = [
 def test_encode_msms(source):
     finder = MSMSFinder()
 
-    encoder = DualEncoder(intensity_max=1000, min_mz=0, max_mz=2000, directory="data/encoded")
+    encoder = DualEncoder(intensity_max=1000, min_mz=0, max_mz=2000)
 
     data = []
 

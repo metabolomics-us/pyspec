@@ -5,11 +5,14 @@ from abc import abstractmethod
 from glob import iglob
 from typing import Tuple, Optional, List
 
+from keras.utils import Sequence
 from keras_preprocessing.image import ImageDataGenerator
 from pandas import DataFrame, read_sql_query
 
+from pyspec.loader import Spectra
 from pyspec.machine.persistence.model import db, MZMLSampleRecord, MZMLMSMSSpectraRecord, \
     MZMZMSMSSpectraClassificationRecord
+from pyspec.machine.spectra import Encoder
 
 
 class LabelGenerator:
@@ -92,8 +95,8 @@ class LabelGenerator:
         else:
             result[1].to_csv(file_name, encoding='utf-8', index=False)
 
-    def get_data_generator(self, dataframe: DataFrame, width: int, height: int, batch_size: int,
-                           class_mode: str = 'categorial'):
+    def get_data_generator(self, dataframe: DataFrame, width: int, height: int, batch_size: int, encoder: Encoder,
+                           class_mode: str = 'categorical'):
         """
 
         returns the correct data generator for this generated training data set
@@ -111,7 +114,7 @@ class LabelGenerator:
             directory=None,
             x_col='file',
             y_col='class',
-            target_size=(width * height),
+            target_size=(width, height),
             class_mode=class_mode,
             batch_size=batch_size
         )
@@ -323,23 +326,24 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
             :return:
             """
             try:
-                value = row.to_dict()
+                value = self._convert(row.to_dict())
 
                 for x in range(0, self.resampling):
                     group_same_compound = groups.get_group(row['name'])
-                    random_spectra_same_compound = group_same_compound[group_same_compound['spectra_id'] != row['spectra_id']].sample(1)
+                    random_spectra_same_compound = group_same_compound[
+                        group_same_compound['spectra_id'] != row['spectra_id']].sample(1)
 
                     group_different_compound = random.choice([g for g in groups.groups.keys() if g != row['name']])
                     random_spectra_different_compound = groups.get_group(group_different_compound).sample(1)
 
                     callback(
-                        id=(value, random_spectra_same_compound),
+                        id=(value, self._convert(random_spectra_same_compound)),
                         category=True,
                         training=training
                     )
 
                     callback(
-                        id=(value, random_spectra_different_compound),
+                        id=(value, self._convert(random_spectra_different_compound)),
                         category=False,
                         training=training
                     )
@@ -349,6 +353,20 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         groups = spectra.groupby(['name'])
         spectra.apply(function, axis=1)
         pass
+
+    def _convert(self, row: dict) -> Spectra:
+        return Spectra(
+            spectra=row['msms'],
+            name=row['name'],
+            ms_level=2,
+            ri=row['ri'],
+            ionCount=row['ion_count'],
+            precursor=row['precursor'],
+            precursorIntensity=row['precursor_intensity'],
+            basePeak=row['base_peak'],
+            basePeakIntensity=row['base_peak_intensity']
+
+        )
 
     def returns_multiple(self):
         """
@@ -370,3 +388,17 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         :return:
         """
         return False
+
+    def get_data_generator(self, dataframe: DataFrame, width: int, height: int, batch_size: int,
+                           class_mode: str = 'categorical'):
+        """
+        generates a custom data generator
+        :param dataframe:
+        :param width:
+        :param height:
+        :param batch_size:
+        :param class_mode:
+        :return:
+        """
+
+        pass

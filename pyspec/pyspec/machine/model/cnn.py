@@ -1,17 +1,17 @@
 import os
 from abc import ABC, abstractmethod
+from typing import Tuple, List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import Model
 from keras.backend import set_session
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras.callbacks import ModelCheckpoint, TensorBoard
 from keras.utils import multi_gpu_model
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
-from typing import Tuple, List, Optional
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from keras_preprocessing.image import ImageDataGenerator
+
 from pyspec.loader import Spectra
 from pyspec.machine.labels.generate_labels import LabelGenerator
 from pyspec.machine.spectra import Encoder
@@ -112,8 +112,10 @@ class CNNClassificationModel(ABC):
         total_train = train_df.shape[0]
         total_validate = validate_df.shape[0]
 
-        train_generator = self.generate_training_generator(train_df, generator)
-        validation_generator = self.generate_validation_generator(validate_df, generator)
+        train_generator = generator.get_data_generator(train_df, width=self.width, height=self.height,
+                                                       batch_size=self.batch_size, encoder=encoder)
+        validation_generator = generator.get_data_generator(validate_df, width=self.width, height=self.height,
+                                                            batch_size=self.batch_size, encoder=encoder)
 
         set_session(self.configure_session())
         model = self.build()
@@ -167,42 +169,6 @@ class CNNClassificationModel(ABC):
         else:
             # assume we need to split the data
             return train_test_split(dataframe[0], test_size=test_size, random_state=42)
-
-    def generate_validation_generator(self, validate_df: DataFrame, generator: LabelGenerator):
-        """
-        generates a validation generator for based on the validation dataframe
-        :param validate_df:
-        :return:
-        """
-        validation_datagen = ImageDataGenerator()
-        validation_generator = validation_datagen.flow_from_dataframe(
-            validate_df,
-            None,
-            x_col='file',
-            y_col='class',
-            target_size=(self.width, self.height),
-            class_mode='categorical',
-            batch_size=self.batch_size,
-        )
-        return validation_generator
-
-    def generate_training_generator(self, train_df: DataFrame, generator: LabelGenerator):
-        """
-        generate a training generator for us based on the training data frame
-        :param train_df:
-        :return:
-        """
-        train_datagen = ImageDataGenerator()
-        train_generator = train_datagen.flow_from_dataframe(
-            train_df,
-            None,
-            x_col='file',
-            y_col='class',
-            target_size=(self.width, self.height),
-            class_mode='categorical',
-            batch_size=self.batch_size,
-        )
-        return train_generator
 
     def configure_checkpoints(self, callbacks, gpus, input, verbose):
         """

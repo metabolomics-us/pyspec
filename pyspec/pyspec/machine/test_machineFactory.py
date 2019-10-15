@@ -10,7 +10,6 @@ def test_load_encoder():
     assert encoder.width == 500
     assert encoder.height == 500
     assert encoder.axis is False
-    assert encoder.intensity_max == 1000
     assert encoder.min_mz == 0
     assert encoder.max_mz == 2000
     assert encoder.dpi == 72

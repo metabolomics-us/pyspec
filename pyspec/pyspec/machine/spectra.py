@@ -1,3 +1,4 @@
+import traceback
 from abc import abstractmethod
 from typing import List, Optional, Any, Tuple
 
@@ -33,7 +34,7 @@ class Encoder:
         self.axis = plot_axis
         self.dpi = dpi
 
-    def encode(self, spec: Spectra) -> Tuple[str, Any]:
+    def encode(self, spec: Spectra) -> str:
         """
         encodes a spectra to a string in graphical form
         :param spec:
@@ -43,7 +44,7 @@ class Encoder:
         """
         return self._encode(spec)
 
-    def _encode(self, spec: Spectra) -> Tuple[str, List[Any]]:
+    def _encode(self, spec: Spectra) -> str:
         """
         encodes the given spectra
         :param spec: spectra
@@ -91,10 +92,11 @@ class Encoder:
 
             plt.tight_layout()
             fig.canvas.draw()
-
             spectra_string = fig.canvas.tostring_rgb()
+#            plt.show()
             return spectra_string
-        except ValueError:
+        except ValueError as e:
+            traceback.print_exc()
             pass
 
     @abstractmethod
@@ -105,6 +107,32 @@ class Encoder:
         :param fig:
         :return:
         """
+
+
+class SingleEncoder(Encoder):
+    """
+        simple spectra encoding
+    """
+
+    def _encode_dataframe(self, dataframe, fig):
+        """
+        encodes the given dataframe on the figure in form of a graphic
+        :param dataframe:
+        :param fig:
+        :return:
+        """
+        dataframe['intensity_min_max'] = (dataframe['intensity'] - dataframe['intensity'].min()) / (
+                dataframe['intensity'].max() - dataframe['intensity'].min())
+
+        ax1 = plt.subplot(1, 1, 1)
+        ax1.stem(dataframe['mz'], dataframe['intensity_min_max'], markerfmt=' ', linefmt='black',
+                 use_line_collection=True)
+        ax1.set_xlim(self.min_mz, self.max_mz)
+        ax1.set_ylim(0, 1)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        if not self.axis:
+            ax1.axis('off')
 
 
 class DualEncoder(Encoder):
