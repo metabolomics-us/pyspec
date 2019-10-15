@@ -14,8 +14,7 @@ class Encoder:
     encodes incomming data in a graphic representation
     """
 
-    def __init__(self, width=512, height=512, min_mz=0, max_mz=2000, plot_axis=False, intensity_max=1000, dpi=72,
-                 directory: Optional = None):
+    def __init__(self, width=512, height=512, min_mz=0, max_mz=2000, plot_axis=False, dpi=72):
         """
 
         :param width: width in pixel
@@ -32,7 +31,6 @@ class Encoder:
         self.min_mz = min_mz
         self.max_mz = max_mz
         self.axis = plot_axis
-        self.intensity_max = intensity_max
         self.dpi = dpi
 
     def encode(self, spec: Spectra) -> Tuple[str, Any]:
@@ -85,9 +83,6 @@ class Encoder:
             # drop data outside min and max
             dataframe = dataframe[(dataframe['nominal'] >= self.min_mz) & (dataframe['nominal'] <= self.max_mz)]
 
-            dataframe['intensity_min_max'] = (dataframe['intensity'] - dataframe['intensity'].min()) / (
-                    dataframe['intensity'].max() - dataframe['intensity'].min())
-
             # formatting
             fig = plt.figure(
                 figsize=(self.height / self.dpi, self.width / self.dpi), dpi=self.dpi)
@@ -124,6 +119,9 @@ class DualEncoder(Encoder):
         :param fig:
         :return:
         """
+        dataframe['intensity_min_max'] = (dataframe['intensity'] - dataframe['intensity'].min()) / (
+                dataframe['intensity'].max() - dataframe['intensity'].min())
+
         widths = [1]
         heights = [16, 16, 1]
         specs = fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
@@ -145,3 +143,18 @@ class DualEncoder(Encoder):
             ax0.axis('off')
             ax1.axis('off')
             ax2.axis('off')
+
+    def __init__(self, width=512, height=512, min_mz=0, max_mz=2000, plot_axis=False, intensity_max=1000, dpi=72):
+        """
+
+        :param width: width in pixel
+        :param height: height in pixel
+        :param min_mz: min mass
+        :param max_mz: max mass
+        :param plot_axis: do we want to plot axes
+        :param intensity_max: max intensity
+        :param dpi: resolution
+        :param directory: optional directory where to store encoded data. If none just the string will be returned.
+        """
+        super().__init__(width, height, min_mz, max_mz, plot_axis, dpi)
+        self.intensity_max = intensity_max

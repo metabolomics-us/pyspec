@@ -1,10 +1,10 @@
 import csv
-import multiprocessing
 import os
 from abc import abstractmethod
 from glob import iglob
 from typing import Tuple, Optional, List
 
+from keras_preprocessing.image import ImageDataGenerator
 from pandas import DataFrame, read_sql_query
 
 from pyspec.machine.persistence.model import db, MZMLSampleRecord, MZMLMSMSSpectraRecord, \
@@ -90,6 +90,32 @@ class LabelGenerator:
             result[0].to_csv(file_name, encoding='utf-8', index=False)
         else:
             result[1].to_csv(file_name, encoding='utf-8', index=False)
+
+    def get_data_generator(self, dataframe: DataFrame, width: int, height: int, batch_size: int,
+                           class_mode: str = 'categorial'):
+        """
+
+        returns the correct data generator for this generated training data set
+
+        :param dataframe:
+        :param width:
+        :param height:
+        :param batch_size:
+        :param class_mode:
+        :return:
+        """
+        datagen = ImageDataGenerator()
+        datagen.flow_from_dataframe(
+            dataframe=dataframe,
+            directory=None,
+            x_col='file',
+            y_col='class',
+            target_size=(width * height),
+            class_mode=class_mode,
+            batch_size=batch_size
+        )
+
+        return datagen
 
 
 class DirectoryLabelGenerator(LabelGenerator):
@@ -289,7 +315,6 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
                 "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' LIMIT {}".format(
                     self.limit),
                 db.connection())
-
 
         def function(row):
             """

@@ -16,26 +16,35 @@ class SimpleMultiCNNModel(MultiInputCNNModel):
     def build(self) -> Model:
         pass
 
-    def generate_validation_generator(self, validate_df: DataFrame, generator:LabelGenerator):
-        return super().generate_validation_generator(validate_df,generator)
+    def generate_validation_generator(self, validate_df: DataFrame, generator: LabelGenerator):
+        return super().generate_validation_generator(validate_df, generator)
 
-    def generate_training_generator(self, train_df: DataFrame, generator:LabelGenerator):
-        return super().generate_training_generator(train_df,generator)
+    def generate_training_generator(self, train_df: DataFrame, generator: LabelGenerator):
+        return super().generate_training_generator(train_df, generator)
 
-    def predict_from_spectra(self, input: str, spectra: Spectra, encoder: Encoder) -> str:
+
+class SimilarityModel(MultiInputCNNModel):
+    """
+    computes the similarity between 2 spectra records and is a base class. Concrete implemntations will define the actual models, etc
+    """
+
+    def build(self) -> Model:
+        pass
+
+    def predict(self, first: Spectra, second: Spectra, encode: Encoder) -> float:
         """
-        predicts the class from the given spectra
-        :param spectra:
+        predicts a similarity score between 2 different spectra, with the given encode.
+        score is between 0 and 1. 0 for none identical at all, 1 for identical match
+        :param first:
+        :param second:
+        :param encode:
         :return:
         """
-        model = self.get_model(input)
-        spectra = encoder.encode(spectra)
 
-        # convert the incoming data to a numpy array wxhxc
-        data = np.fromstring(spectra, dtype='uint8').reshape((self.width, self.height, self.channels))
-        # expand it by 1 dimension
-        data = np.expand_dims(data, axis=0)
+        pass
 
-        y_proba = model.predict(data, batch_size=self.batch_size)
-        y_classes = y_proba.argmax(axis=-1)
-        return y_classes[0]
+    def generate_validation_generator(self, validate_df: DataFrame, generator: LabelGenerator):
+        return super().generate_validation_generator(validate_df, generator)
+
+    def generate_training_generator(self, train_df: DataFrame, generator: LabelGenerator):
+        return super().generate_training_generator(train_df, generator)

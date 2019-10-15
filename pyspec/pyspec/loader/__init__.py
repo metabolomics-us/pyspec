@@ -11,3 +11,10 @@ class Spectra(NamedTuple):
     inchiKey: Optional[str] = None
     splash: Optional[str] = None
     properties: dict = {}
+    ri: Optional[float] = None
+    intensity: Optional[float] = None
+    ionCount: Optional[float] = None
+    precursorIntensity: Optional[float] = None
+    precursor: Optional[float] = None
+    basePeak: Optional[float] = None
+    basePeakIntensity: Optional[float] = None

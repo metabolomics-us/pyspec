@@ -92,6 +92,10 @@ class CNNClassificationModel(ABC):
         if gpus is None:
             gpus = get_gpu_count()
 
+        if encoder is not None:
+            encoder.width = self.width
+            encoder.height = self.height
+
         self.fix_seed()
         learning_rate_reduction = ReduceLROnPlateau(monitor='val_acc',
                                                     patience=2,
@@ -300,14 +304,6 @@ class CNNClassificationModel(ABC):
         m = self.build()
         m.load_weights(self.get_model_file(input))
         return m
-
-    @abstractmethod
-    def predict_from_spectra(self, input: str, spectra: Spectra, encoder: Encoder) -> str:
-        """
-        predicts the class from the given spectra
-        :param spectra:
-        :return:
-        """
 
     def get_name(self) -> str:
 
