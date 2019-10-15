@@ -50,7 +50,13 @@ def _transform_spectrum(spectrum, bin_size=None, normalize=True, scale_function=
                 transformed_spectrum[k] = 100 * transformed_spectrum[k] / max_intensity
 
             if scale_function is not None:
-                transformed_spectrum[k] = scale_function(k, transformed_spectrum[k])
+                # calculate mass correspoding to bin key
+                if bin_size is None:
+                    mass = k
+                else:
+                    mass = k * bin_size
+
+                transformed_spectrum[k] = scale_function(mass, transformed_spectrum[k])
 
     return transformed_spectrum
 
