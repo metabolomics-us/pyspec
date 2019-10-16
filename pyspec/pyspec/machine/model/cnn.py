@@ -1,5 +1,6 @@
 import os
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Tuple, List, Optional
 
 import matplotlib.pyplot as plt
@@ -92,9 +93,9 @@ class CNNClassificationModel(ABC):
         if gpus is None:
             gpus = get_gpu_count()
 
-        if encoder is not None:
-            encoder.width = self.width
-            encoder.height = self.height
+        assert encoder is not None, "please ensure you provide an encoder!"
+        encoder.width = self.width
+        encoder.height = self.height
 
         self.fix_seed()
         learning_rate_reduction = ReduceLROnPlateau(monitor='val_acc',
@@ -179,6 +180,8 @@ class CNNClassificationModel(ABC):
         :param verbose:
         :return:
         """
+
+        os.makedirs(Path(self.get_model_file(input=input)).parent, exist_ok=True)
         if gpus > 1:
             callbacks.append(
                 MultiGPUModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,

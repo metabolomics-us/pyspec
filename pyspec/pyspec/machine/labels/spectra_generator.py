@@ -54,14 +54,17 @@ class SpectraDataGenerator(Sequence):
         # Generate data
         for i, spec in enumerate(spectra):
             # Store sample
-            encoded = self.encoder.encode(spec[0])
-            image = np.fromstring(encoded, dtype='uint8')
-            image = image.reshape((self.encoder.width, self.encoder.height, 3))
-            image = np.expand_dims(image, axis=0)
-            X[i] = image
+            try:
+                encoded = self.encoder.encode(spec[0])
+                image = np.fromstring(encoded, dtype='uint8')
+                image = image.reshape((self.encoder.width, self.encoder.height, 3))
+                image = np.expand_dims(image, axis=0)
+                X[i] = image
 
-            # Store class
-            label = self.class_indices[spec[1]]
-            y[i] = label
+                # Store class
+                label = self.class_indices[spec[1]]
+                y[i] = label
+            except Exception as e:
+                pass
 
         return X, keras.utils.to_categorical(y, num_classes=self.n_classes)

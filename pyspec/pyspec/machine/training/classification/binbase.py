@@ -19,7 +19,7 @@ class BinBaseBinClassifier(Classifier):
         self.sample_count = int(sample_count)
         self.bin_ids = bin_ids
 
-    def classify(self):
+    def classify(self,include_testdata=False):
         connection = self.loader.connection
         # 1. query all bins with InChI Key
 
@@ -51,10 +51,10 @@ class BinBaseBinClassifier(Classifier):
                 # 5. generate folder name based on InChI Key
                 sample_id, sample_name, inchi_key, name, spectra = row
 
-                self.encoder.encode(Spectra(
+                result = self.encoder.encode(Spectra(
                     name=name,
                     spectra=spectra
-                ), prefix="{}/{}".format(inchi_key, sample_name))
+                ))
 
                 row = cursor.fetchone()
             # 6. generate sub folders, based on sample_name/spectra/splash.png

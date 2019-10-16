@@ -10,6 +10,7 @@ from keras_preprocessing.image import ImageDataGenerator
 from pandas import DataFrame, read_sql_query
 
 from pyspec.loader import Spectra
+from pyspec.machine.labels.spectra_generator import SpectraDataGenerator
 from pyspec.machine.persistence.model import db, MZMLSampleRecord, MZMLMSMSSpectraRecord, \
     MZMZMSMSSpectraClassificationRecord
 from pyspec.machine.spectra import Encoder
@@ -109,7 +110,7 @@ class LabelGenerator:
         :return:
         """
         datagen = ImageDataGenerator()
-        datagen.flow_from_dataframe(
+        return datagen.flow_from_dataframe(
             dataframe=dataframe,
             directory=None,
             x_col='file',
@@ -118,8 +119,6 @@ class LabelGenerator:
             class_mode=class_mode,
             batch_size=batch_size
         )
-
-        return datagen
 
 
 class DirectoryLabelGenerator(LabelGenerator):
@@ -331,10 +330,10 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
                 for x in range(0, self.resampling):
                     group_same_compound = groups.get_group(row['name'])
                     random_spectra_same_compound = group_same_compound[
-                        group_same_compound['spectra_id'] != row['spectra_id']].sample(1)
+                        group_same_compound['spectra_id'] != row['spectra_id']].sample(1).iloc[0].to_dict()
 
                     group_different_compound = random.choice([g for g in groups.groups.keys() if g != row['name']])
-                    random_spectra_different_compound = groups.get_group(group_different_compound).sample(1)
+                    random_spectra_different_compound = groups.get_group(group_different_compound).sample(1).iloc[0].to_dict()
 
                     callback(
                         id=(value, self._convert(random_spectra_same_compound)),
@@ -389,7 +388,7 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         """
         return False
 
-    def get_data_generator(self, dataframe: DataFrame, width: int, height: int, batch_size: int,
+    def get_data_generator(self, dataframe: DataFrame, width: int, height: int, batch_size: int, encoder: Encoder,
                            class_mode: str = 'categorical'):
         """
         generates a custom data generator
@@ -401,4 +400,41 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         :return:
         """
 
-        pass
+        content_first = []
+        content_second = []
+
+        def collector(row):
+            nonlocal content_first
+            nonlocal content_second
+
+            # first spectra object
+            content_first.append((row['file'][0], row['class']))
+
+            # second spectra object
+            content_second.append((row['file'][1], row['class']))
+
+        dataframe.apply(collector, axis=1)
+
+        generator_first = SpectraDataGenerator(spectra=content_first, encoder=encoder)
+        generator_second = SpectraDataGenerator(spectra=content_second, encoder=encoder)
+
+        assert len(generator_first) == len(generator_second), "both generators need to be the same size!"
+
+        class CombinedGenerator(Sequence):
+            """
+            combines our generators to easily generate the required input data for our model
+            with multiple inputs
+            """
+
+            def __getitem__(self, index):
+                X1_batch, Y_batch = generator_first.__getitem__(index)
+                X2_batch, Y_batch = generator_second.__getitem__(index)
+
+                X_batch = [X1_batch, X2_batch]
+
+                return X_batch, Y_batch
+
+            def __len__(self):
+                return generator_first.__len__()
+
+        return CombinedGenerator()
