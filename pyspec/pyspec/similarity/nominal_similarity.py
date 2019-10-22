@@ -1,19 +1,29 @@
 import collections
 import math
 
+from typing import Dict, List, Tuple
+
+from pyspec.loader import Spectra
+from pyspec.parser.pymzl.msms_spectrum import MSMSSpectrum
+
 
 EPS_CORRECTION = 1.0e-6
 MZ_ROUND_CORRECTION = 0.2
 
 
-def _transform_spectrum_tuple(spectrum):
-    s = [tuple(map(float, x.split(':'))) for x in spectrum.split()]
-    return [x for x in s if x[1] > 0]
-
-
-def _transform_spectrum(spectrum, bin_size=None, normalize=True, scale_function=None):
+def _transform_spectrum_tuple(spectrum) -> List[Tuple[float, float]]:
     """
+    transform a given spectrum from string format to a list of tuples
+    :param spectrum:
+    :return:
+    """
+    s = [tuple(map(float, x.split(':'))) for x in spectrum.split()]
+    return [(mz, intensity) for mz, intensity in s if mz > 0]
 
+
+def _transform_spectrum(spectrum, bin_size=None, normalize=True, scale_function=None) -> Dict[int, float]:
+    """
+    transform the input spectrum through binning, normalization and scaling as required
     :param spectrum:
     :param bin_size: bin width for describing sensitivity of spectrum similarity
     :param normalize: whether to normalize the binned spectrum (base peak intensity is 100)
@@ -21,8 +31,12 @@ def _transform_spectrum(spectrum, bin_size=None, normalize=True, scale_function=
     :return:
     """
 
+    if type(spectrum) == Spectra:
+        spectrum = spectrum.spectra
     if type(spectrum) == str:
         spectrum = _transform_spectrum_tuple(spectrum)
+    if type(spectrum) == MSMSSpectrum:
+        spectrum = spectrum.peaks('raw')
 
     # build binned spectrum
     bins = collections.defaultdict(float)
@@ -61,7 +75,7 @@ def _transform_spectrum(spectrum, bin_size=None, normalize=True, scale_function=
     return transformed_spectrum
 
 
-def cosine_similarity(a, b, bin_size=None):
+def cosine_similarity(a, b, bin_size: float = None) -> float:
     """
     calculate the standard cosine similarity between two spectra
     :param a:
@@ -71,9 +85,9 @@ def cosine_similarity(a, b, bin_size=None):
     """
 
     # handle different input formats
-    if type(a) in [str, list]:
+    if type(a) in [str, list, Spectra, MSMSSpectrum]:
         a = _transform_spectrum(a, bin_size=bin_size)
-    if type(b) in [str, list]:
+    if type(b) in [str, list, Spectra, MSMSSpectrum]:
         b = _transform_spectrum(b, bin_size=bin_size)
 
     # calculate norm for each spectrum using all ions
@@ -90,7 +104,7 @@ def cosine_similarity(a, b, bin_size=None):
         return product / normA / normB
 
 
-def composite_similarity(a, b):
+def composite_similarity(a, b) -> float:
     """
     calculate composite similarity between two spectra
     note: this is currently only defined for nominal mass spectra and cannot be used with custom binning
@@ -100,9 +114,9 @@ def composite_similarity(a, b):
     """
 
     # handle different input formats
-    if type(a) == str:
+    if type(a) in [str, list, Spectra, MSMSSpectrum]:
         a = _transform_spectrum(a)
-    if type(b) == str:
+    if type(b) in [str, list, Spectra, MSMSSpectrum]:
         b = _transform_spectrum(b)
 
     # identify shared ions and calculate cosine similarity
