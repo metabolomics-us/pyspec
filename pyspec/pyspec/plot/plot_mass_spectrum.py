@@ -17,8 +17,11 @@ def _normalize(s, scale: float = 100):
     if type(s) == str:
         s = [tuple(map(float, x.split(':'))) for x in s.split()]
 
-    max_intensity = max(x[1] for x in s)
-    return sorted([(x[0], scale * x[1] / max_intensity) for x in s], key=lambda x: -x[1])
+    if scale is None or not scale:
+        return s
+    else:
+        max_intensity = max(x[1] for x in s)
+        return sorted([(x[0], scale * x[1] / max_intensity) for x in s], key=lambda x: -x[1])
 
 
 def _plot_spectrum(spectrum, ax, reverse=False, scale=100, show_labels=True, n_labels=8, label_min_intensity=1, label_font_size=6):
@@ -27,7 +30,7 @@ def _plot_spectrum(spectrum, ax, reverse=False, scale=100, show_labels=True, n_l
     :param spectrum:
     :param ax: matplotlib axis to plot onto
     :param reverse: whether this is a reference spectrum (bottom half of a head-to-tail plot)
-    :param scale: maximum intensity
+    :param scale: maximum intensity (or False/None for no scaling)
     :param show_labels: whether to display ion labels
     :param n_labels: maximum number of ion labels to display
     :param label_min_intensity: minimum relative intensity for ion labels to be shown
@@ -96,11 +99,12 @@ def _multiplot_config(fig, title: str = None):
     plt.ylabel('m/z')
 
 
-def plot_multiple_mass_spectra(spectra: List, filename: str, labels: List[str] = None, title: str = None):
+def plot_multiple_mass_spectra(spectra: List, filename: str, scale=100, labels: List[str] = None, title: str = None):
     """
     plots a set of mass spectra in a single plot
     :param spectra:
     :param filename:
+    :param scale:
     :param labels: labels for each subplot
     :param title:
     :return:
@@ -111,7 +115,7 @@ def plot_multiple_mass_spectra(spectra: List, filename: str, labels: List[str] =
 
     if labels is None:
         for s, ax in zip(spectra, axes):
-            _plot_spectrum(s, ax)
+            _plot_spectrum(s, ax, scale=scale)
             ax.set_ylim(0, 110)
 
     else:
