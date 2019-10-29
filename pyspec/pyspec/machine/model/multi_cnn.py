@@ -6,6 +6,7 @@ from keras.layers import Dense, concatenate, Conv2D, MaxPooling2D, Flatten
 from keras.utils import plot_model
 
 from pyspec.loader import Spectra
+from pyspec.machine.labels.similarity_labels import SimilarityTuple
 from pyspec.machine.model.cnn import MultiInputCNNModel
 from pyspec.machine.spectra import Encoder
 
@@ -18,7 +19,7 @@ class SimilarityModel(MultiInputCNNModel):
     def build(self) -> Model:
         first_spectra = Input(shape=(self.width, self.height, self.channels))
         second_spectra = Input(shape=(self.width, self.height, self.channels))
-        similarity_measures = Input(shape=(4,))
+        similarity_measures = Input(shape=(len(list(SimilarityTuple())),))
         x = self.rename_layers(self.create_cnn(first_spectra), "library")
         y = self.rename_layers(self.create_cnn(second_spectra), "unknown")
         xy = self.rename_layers(self.create_similarity_measures_nn(similarity_measures), "measures")
@@ -65,6 +66,7 @@ class SimilarityModel(MultiInputCNNModel):
 
         pass
 
+
 class Resnet50SimilarityModel(SimilarityModel):
     """
     defines a simple resnet 50 based architecture
@@ -82,5 +84,3 @@ class Resnet50SimilarityModel(SimilarityModel):
         x = Dense(2, activation='softmax')(x)
         model = Model(inputs=base.inputs, outputs=x)
         return model
-
-

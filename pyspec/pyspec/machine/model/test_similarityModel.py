@@ -5,7 +5,7 @@ from pyspec.machine.spectra import Encoder, SingleEncoder
 
 
 def test_predict_resnet50():
-    dataset = EnhancedSimilarityDatasetLabelGenerator(limit=3500)
+    dataset = EnhancedSimilarityDatasetLabelGenerator(limit=5)
 
     model = Resnet50SimilarityModel(
         width=125,

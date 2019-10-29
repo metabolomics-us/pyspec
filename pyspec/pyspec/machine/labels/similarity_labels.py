@@ -1,6 +1,7 @@
 import random
 from typing import Optional, NamedTuple
 
+import tabulate
 from keras.utils import Sequence
 from pandas import read_sql_query, DataFrame
 
@@ -15,15 +16,15 @@ from pyspec.parser.pymzl.msms_spectrum import MSMSSpectrum
 
 class SimilarityTuple(NamedTuple):
     """
-    contains different similarity measures
+    contains different similarity measures. These need to be 0 by default or the model will break
     """
-    reverse_similarity: float
+    reverse_similarity: Optional[float] = 0
 
-    msms_spectrum_similarity: float
+    msms_spectrum_similarity: Optional[float] = 0
 
-    precursor_distance: float
+    precursor_distance: Optional[float] = 0
 
-    retention_index_distance: float
+    retention_index_distance: Optional[float] = 0
 
 
 class SimilarityDatasetLabelGenerator(LabelGenerator):
@@ -54,16 +55,38 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         :return:
         """
 
-        # contains all spectra and compounds
-        if self.limit is None:
-            spectra = read_sql_query(
-                "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name'",
-                db.connection())
-        else:
-            spectra = read_sql_query(
-                "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' LIMIT {}".format(
-                    self.limit),
-                db.connection())
+        # 1. select all compounds
+        names = "select distinct value as name from mzmzmsmsspectraclassificationrecord where category = 'name' order by name"
+
+        cursor = db.connection().cursor()
+        cursor.execute(names)
+
+        row = cursor.fetchone()
+
+        spectra: Optional[DataFrame] = None
+        while row is not None:
+            sample = row[0]
+            if self.limit is None:
+                s = read_sql_query(
+                    "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' and b.value = '{}'".format(
+                        sample),
+                    db.connection())
+            else:
+                s = read_sql_query(
+                    "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' and b.value = '{}' LIMIT {}".format(
+                        sample,
+                        self.limit),
+                    db.connection())
+
+            if spectra is None:
+                spectra = s
+            else:
+                spectra = spectra.append(s)
+            row = cursor.fetchone()
+
+        assert spectra is not None
+
+        print("evaluating {} spectra for this label generation".format(len(spectra)))
 
         def function(row):
             """
