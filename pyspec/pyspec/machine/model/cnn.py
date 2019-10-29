@@ -379,3 +379,15 @@ class MultiInputCNNModel(CNNClassificationModel, ABC):
     """
     supports multiple inputs
     """
+
+    def rename_layers(self, model, identifier):
+        """
+        renames all layers in this model to ensure uniqueness
+        :param model:
+        :param identifier:
+        :return:
+        """
+        for layer in model.layers:
+            layer.name = "{}_{}".format(layer.name, identifier)
+
+        return model

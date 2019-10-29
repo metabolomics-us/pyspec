@@ -1,4 +1,4 @@
-from pyspec.machine.labels.generate_labels import SimilarityDatasetLabelGenerator
+from pyspec.machine.labels.similarity_labels import SimilarityDatasetLabelGenerator
 from pyspec.machine.labels.spectra_generator import SpectraDataGenerator
 from pyspec.machine.spectra import SingleEncoder
 
