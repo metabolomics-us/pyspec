@@ -244,7 +244,8 @@ class EnhancedSimilarityDatasetLabelGenerator(SimilarityDatasetLabelGenerator):
             nonlocal content_first
             nonlocal content_second
 
-            try:
+            if row['file'][0].precursor is not None and row['file'][1].precursor is not None and row['file'][
+                0].ri is not None and row['file'][1].ri is not None:
                 # first spectra object
                 content_first.append((row['file'][0], row['class']))
 
@@ -253,8 +254,6 @@ class EnhancedSimilarityDatasetLabelGenerator(SimilarityDatasetLabelGenerator):
 
                 # compute similarity scores here to be appended
                 content_similarities.append(self.compute_similarities(row['file'][0], row['file'][1]))
-            except Exception as e:
-                pass
 
         dataframe.apply(collector, axis=1)
 
