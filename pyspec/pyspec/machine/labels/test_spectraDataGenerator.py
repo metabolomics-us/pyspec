@@ -9,7 +9,7 @@ def test_dataset_generator():
     :return:
     """
 
-    dataset = SimilarityDatasetLabelGenerator(limit=500)
+    dataset = SimilarityDatasetLabelGenerator(spectra_per_compounds=500)
 
     data = dataset.generate_dataframe("dasdas")[0]
 

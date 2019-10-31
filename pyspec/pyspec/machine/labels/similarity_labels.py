@@ -32,7 +32,8 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
     generates a dataset dedicated for similarity searches
     """
 
-    def __init__(self, resample: Optional[int] = None, limit: Optional[int] = None):
+    def __init__(self, resample: Optional[int] = None, spectra_per_compounds: Optional[int] = None,
+                 compound_limit: Optional[int] = None):
         db.create_tables([MZMLSampleRecord, MZMLMSMSSpectraRecord, MZMZMSMSSpectraClassificationRecord])
 
         if resample is None:
@@ -40,7 +41,8 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         else:
             self.resampling = resample
 
-        self.limit = limit
+        self.spectra_per_compounds = spectra_per_compounds
+        self.compount_limit = compound_limit
 
     def generate_labels(self, input: str, callback, training: bool):
         """
@@ -56,8 +58,11 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         """
 
         # 1. select all compounds
-        names = "select distinct value as name from mzmzmsmsspectraclassificationrecord where category = 'name' order by name"
-
+        if self.compount_limit is None:
+            names = "select distinct value as name from mzmzmsmsspectraclassificationrecord where category = 'name' order by name"
+        else:
+            names = "select distinct value as name from mzmzmsmsspectraclassificationrecord where category = 'name' order by name LIMIT {}".format(
+                self.compount_limit)
         cursor = db.connection().cursor()
         try:
             cursor.execute(names)
@@ -67,7 +72,7 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
             spectra: Optional[DataFrame] = None
             while row is not None:
                 sample = row[0]
-                if self.limit is None:
+                if self.spectra_per_compounds is None:
                     s = read_sql_query(
                         "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' and b.value = '{}'".format(
                             sample),
@@ -76,7 +81,7 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
                     s = read_sql_query(
                         "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' and b.value = '{}' LIMIT {}".format(
                             sample,
-                            self.limit),
+                            self.spectra_per_compounds),
                         db.connection())
 
                 if spectra is None:

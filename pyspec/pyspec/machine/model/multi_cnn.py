@@ -6,9 +6,11 @@ from keras.layers import Dense, concatenate, Conv2D, MaxPooling2D, Flatten
 from keras.utils import plot_model
 
 from pyspec.loader import Spectra
-from pyspec.machine.labels.similarity_labels import SimilarityTuple
+from pyspec.machine.labels.similarity_labels import SimilarityTuple, SimilarityDatasetLabelGenerator, \
+    EnhancedSimilarityDatasetLabelGenerator
 from pyspec.machine.model.cnn import MultiInputCNNModel
 from pyspec.machine.spectra import Encoder
+import numpy as np
 
 
 class SimilarityModel(MultiInputCNNModel):
@@ -54,7 +56,7 @@ class SimilarityModel(MultiInputCNNModel):
         :return:
         """
 
-    def predict(self, first: Spectra, second: Spectra, encode: Encoder) -> float:
+    def predict(self, input: str, first: Spectra, second: Spectra, encode: Encoder) -> float:
         """
         predicts a similarity score between 2 different spectra, with the given encode.
         score is between 0 and 1. 0 for none identical at all, 1 for identical match
@@ -64,7 +66,24 @@ class SimilarityModel(MultiInputCNNModel):
         :return:
         """
 
-        pass
+        model = self.get_model(input)
+        encode.height = self.height
+        encode.width = self.width
+
+        encoded_1 = np.expand_dims(
+            np.fromstring(encode.encode(first), dtype='uint8').reshape((self.width, self.height, self.channels)),
+            axis=0)
+        encoded_2 = np.expand_dims(
+            np.fromstring(encode.encode(second), dtype='uint8').reshape((self.width, self.height, self.channels)),
+            axis=0)
+
+        measures = EnhancedSimilarityDatasetLabelGenerator.compute_similarities(first, second)
+
+        request = [encoded_1, encoded_2, measures]
+
+        prediction = model.predict(request, batch_size=self.batch_size)
+        # assemble to numpy array
+        return prediction
 
 
 class Resnet50SimilarityModel(SimilarityModel):

@@ -5,7 +5,7 @@ from pyspec.machine.labels.similarity_labels import SimilarityDatasetLabelGenera
 
 
 def test_generate_labels():
-    generator = SimilarityDatasetLabelGenerator(limit=500)
+    generator = SimilarityDatasetLabelGenerator(spectra_per_compounds=500)
 
     result = generator.generate_dataframe("not important")
 
