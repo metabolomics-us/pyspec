@@ -59,31 +59,34 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         names = "select distinct value as name from mzmzmsmsspectraclassificationrecord where category = 'name' order by name"
 
         cursor = db.connection().cursor()
-        cursor.execute(names)
+        try:
+            cursor.execute(names)
 
-        row = cursor.fetchone()
-
-        spectra: Optional[DataFrame] = None
-        while row is not None:
-            sample = row[0]
-            if self.limit is None:
-                s = read_sql_query(
-                    "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' and b.value = '{}'".format(
-                        sample),
-                    db.connection())
-            else:
-                s = read_sql_query(
-                    "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' and b.value = '{}' LIMIT {}".format(
-                        sample,
-                        self.limit),
-                    db.connection())
-
-            if spectra is None:
-                spectra = s
-            else:
-                spectra = spectra.append(s)
             row = cursor.fetchone()
 
+            spectra: Optional[DataFrame] = None
+            while row is not None:
+                sample = row[0]
+                if self.limit is None:
+                    s = read_sql_query(
+                        "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' and b.value = '{}'".format(
+                            sample),
+                        db.connection())
+                else:
+                    s = read_sql_query(
+                        "select spectra_id, msms,ri,precursor,precursor_intensity,base_peak,base_peak_intensity,ion_count,value as name from mzmlmsmsspectrarecord a, mzmzmsmsspectraclassificationrecord b where a.id = b.spectra_id and b.category = 'name' and b.value = '{}' LIMIT {}".format(
+                            sample,
+                            self.limit),
+                        db.connection())
+
+                if spectra is None:
+                    spectra = s
+                else:
+                    spectra = spectra.append(s)
+                row = cursor.fetchone()
+
+        finally:
+            cursor.close()
         assert spectra is not None
 
         print("evaluating {} spectra for this label generation".format(len(spectra)))
@@ -122,6 +125,10 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
 
         groups = spectra.groupby(['name'])
         spectra.apply(function, axis=1)
+
+        # drop duplicated values
+        spectra.drop_duplicates(inplace=True)
+
         pass
 
     def _convert(self, row: dict) -> Spectra:
@@ -237,14 +244,17 @@ class EnhancedSimilarityDatasetLabelGenerator(SimilarityDatasetLabelGenerator):
             nonlocal content_first
             nonlocal content_second
 
-            # first spectra object
-            content_first.append((row['file'][0], row['class']))
+            try:
+                # first spectra object
+                content_first.append((row['file'][0], row['class']))
 
-            # second spectra object
-            content_second.append((row['file'][1], row['class']))
+                # second spectra object
+                content_second.append((row['file'][1], row['class']))
 
-            # compute similarity scores here to be appended
-            content_similarities.append(self.compute_similarities(row['file'][0], row['file'][1]))
+                # compute similarity scores here to be appended
+                content_similarities.append(self.compute_similarities(row['file'][0], row['file'][1]))
+            except Exception as e:
+                pass
 
         dataframe.apply(collector, axis=1)
 

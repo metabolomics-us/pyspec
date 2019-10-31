@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -29,7 +30,7 @@ class CNNClassificationModel(ABC):
         return self.__class__.__name__
 
     def __init__(self, width: int, height: int, channels: int, plots: bool = False, batch_size=15, seed=12345,
-                 early_stop=False, tensor_board=True):
+                 early_stop=False, tensor_board=True, workers: Optional[int] = None):
         """
         defines the model size
         :param width:
@@ -46,6 +47,14 @@ class CNNClassificationModel(ABC):
         self.seed = seed
         self.early_stop = early_stop
         self.tensor_board = tensor_board
+
+        if workers is None:
+            workers = multiprocessing.cpu_count() - 2
+
+            if workers < 1:
+                workers = 1
+
+        self.workers = workers
 
     @abstractmethod
     def build(self) -> Model:
@@ -139,11 +148,12 @@ class CNNClassificationModel(ABC):
             steps_per_epoch=total_train / self.batch_size,
             callbacks=callbacks,
             use_multiprocessing=True,
-            verbose=verbose
+            verbose=verbose,
+            workers=self.workers
         )
 
         if self.plots:
-            self.plot_training(epochs, history)
+            self.plot_training(epochs, history, input)
 
         del model
         from keras import backend as K
@@ -214,7 +224,7 @@ class CNNClassificationModel(ABC):
         print("loading file in {}".format(input))
         return "{}/{}_model.h5".format(input, self.get_name())
 
-    def plot_training(self, epochs, history):
+    def plot_training(self, epochs, history, input):
         """
         plots the training statistics for us
         :param epochs:
@@ -232,7 +242,7 @@ class CNNClassificationModel(ABC):
         legend = plt.legend(loc='best', shadow=True)
         plt.tight_layout()
 
-        plt.title("training report {}, bs = {}".format(self.get_name(), self.batch_size))
+        plt.title("training report {}, bs = {} for {}".format(self.get_name(), self.batch_size, input))
         plt.show()
 
     def predict_from_dataframe(self, input: str, dataframe: DataFrame, file_column: str = "file",

@@ -1,6 +1,19 @@
 from peewee import *
+from playhouse.shortcuts import ReconnectMixin
 
 from pyspec import config
+
+
+class ReconnectPostgresDatabase(ReconnectMixin, PostgresqlDatabase):
+    """
+    tries to reconnect automatically for us
+    """
+    reconnect_errors = (
+        # Error class, error message fragment (or empty string for all).
+        (OperationalError, ''),  # MySQL server has gone away.
+    )
+
+    pass
 
 
 def connect_to_db():
@@ -10,7 +23,8 @@ def connect_to_db():
     """
     c = config.config(filename="database.ini", section="machine")
 
-    return PostgresqlDatabase(c.get('database'), user=c.get('user'), host=c.get('host'), password=c.get('password'))
+    return ReconnectPostgresDatabase(c.get('database'), user=c.get('user'), host=c.get('host'),
+                                    password=c.get('password'))
 
 
 db = connect_to_db()
