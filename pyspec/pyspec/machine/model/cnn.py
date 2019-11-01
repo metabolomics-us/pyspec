@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import traceback
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Tuple, List, Optional
@@ -231,19 +232,25 @@ class CNNClassificationModel(ABC):
         :param history:
         :return:
         """
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 12))
-        ax1.plot(history.history['loss'], color='b', label="Training loss")
-        ax1.plot(history.history['val_loss'], color='r', label="validation loss")
-        ax1.set_xticks(np.arange(1, epochs, 1))
-        ax1.set_yticks(np.arange(0, 1, 0.1))
-        ax2.plot(history.history['acc'], color='b', label="Training accuracy")
-        ax2.plot(history.history['val_acc'], color='r', label="Validation accuracy")
-        ax2.set_xticks(np.arange(1, epochs, 1))
-        legend = plt.legend(loc='best', shadow=True)
-        plt.tight_layout()
 
-        plt.title("training report {}, bs = {} for {}".format(self.get_name(), self.batch_size, input))
-        plt.show()
+        try:
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 12))
+            ax1.plot(history.history['loss'], color='b', label="Training loss")
+            ax1.plot(history.history['val_loss'], color='r', label="validation loss")
+            ax1.set_xticks(np.arange(1, epochs, 1))
+            ax1.set_yticks(np.arange(0, 1, 0.1))
+            ax2.plot(history.history['acc'], color='b', label="Training accuracy")
+            ax2.plot(history.history['val_acc'], color='r', label="Validation accuracy")
+            ax2.set_xticks(np.arange(1, epochs, 1))
+            legend = plt.legend(loc='best', shadow=True)
+            plt.tight_layout()
+
+            plt.title("training report {}, bs = {} for {}".format(self.get_name(), self.batch_size, input))
+            plt.show()
+        except Exception as e:
+            # plotting should never kill everything
+            traceback.print_stack()
+            pass
 
     def predict_from_dataframe(self, input: str, dataframe: DataFrame, file_column: str = "file",
                                class_column: str = "class") -> DataFrame:

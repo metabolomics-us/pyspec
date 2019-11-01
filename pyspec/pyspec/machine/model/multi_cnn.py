@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Optional
 
 from keras import Model, Input
 from keras.applications import ResNet50
@@ -56,7 +57,8 @@ class SimilarityModel(MultiInputCNNModel):
         :return:
         """
 
-    def predict(self, input: str, first: Spectra, second: Spectra, encode: Encoder) -> float:
+    def predict(self, input: str, first: Spectra, second: Spectra, encode: Encoder,
+                model: Optional[Model] = None) -> float:
         """
         predicts a similarity score between 2 different spectra, with the given encode.
         score is between 0 and 1. 0 for none identical at all, 1 for identical match
@@ -66,7 +68,8 @@ class SimilarityModel(MultiInputCNNModel):
         :return:
         """
 
-        model = self.get_model(input)
+        if not model:
+            model = self.get_model(input)
         encode.height = self.height
         encode.width = self.width
 
@@ -79,9 +82,12 @@ class SimilarityModel(MultiInputCNNModel):
 
         measures = EnhancedSimilarityDatasetLabelGenerator.compute_similarities(first, second)
 
+        measures = list(measures)
+        measures = np.array(measures)
+        measures = np.expand_dims(measures.reshape((len(measures),)), axis=0)
         request = [encoded_1, encoded_2, measures]
 
-        prediction = model.predict(request, batch_size=self.batch_size)
+        prediction = model.predict(request, batch_size=self.batch_size)[0][1]
         # assemble to numpy array
         return prediction
 
