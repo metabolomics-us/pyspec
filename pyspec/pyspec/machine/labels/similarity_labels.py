@@ -41,6 +41,7 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         else:
             self.resampling = resample
 
+        assert spectra_per_compounds > 1, "please ensure that you have at least 2 spectra for each compound or the generation will fail"
         self.spectra_per_compounds = spectra_per_compounds
         self.compount_limit = compound_limit
 
@@ -63,10 +64,8 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
         else:
             names = "select distinct value as name from mzmzmsmsspectraclassificationrecord where category = 'name' order by name LIMIT {}".format(
                 self.compount_limit)
-        cursor = db.connection().cursor()
+        cursor = db.execute_sql(names)
         try:
-            cursor.execute(names)
-
             row = cursor.fetchone()
 
             spectra: Optional[DataFrame] = None

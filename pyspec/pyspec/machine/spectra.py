@@ -93,7 +93,6 @@ class Encoder:
             plt.tight_layout()
             fig.canvas.draw()
             spectra_string = fig.canvas.tostring_rgb()
-#            plt.show()
             return spectra_string
         except ValueError as e:
             traceback.print_exc()
