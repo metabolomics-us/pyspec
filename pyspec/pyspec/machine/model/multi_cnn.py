@@ -58,7 +58,7 @@ class SimilarityModel(MultiInputCNNModel):
         """
 
     def predict(self, input: str, first: Spectra, second: Spectra, encode: Encoder,
-                model: Optional[Model] = None) -> float:
+                model: Optional[Model] = None, no_ri: bool = False) -> float:
         """
         predicts a similarity score between 2 different spectra, with the given encode.
         score is between 0 and 1. 0 for none identical at all, 1 for identical match
@@ -80,7 +80,7 @@ class SimilarityModel(MultiInputCNNModel):
             np.fromstring(encode.encode(second), dtype='uint8').reshape((self.width, self.height, self.channels)),
             axis=0)
 
-        measures = EnhancedSimilarityDatasetLabelGenerator.compute_similarities(first, second)
+        measures = EnhancedSimilarityDatasetLabelGenerator.compute_similarities(first, second, no_ri=no_ri)
 
         measures = list(measures)
         measures = np.array(measures)

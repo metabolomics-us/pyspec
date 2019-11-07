@@ -228,6 +228,11 @@ class EnhancedSimilarityDatasetLabelGenerator(SimilarityDatasetLabelGenerator):
     and so allows for a more complex model
     """
 
+    def __init__(self, resample: Optional[int] = None, spectra_per_compounds: Optional[int] = None,
+                 compound_limit: Optional[int] = None, no_ri: bool = False):
+        super().__init__(resample=resample, spectra_per_compounds=spectra_per_compounds, compound_limit=compound_limit)
+        self.no_ri = no_ri
+
     def get_data_generator(self, dataframe: DataFrame, width: int, height: int, batch_size: int, encoder: Encoder,
                            class_mode: str = 'categorical'):
         """
@@ -257,7 +262,7 @@ class EnhancedSimilarityDatasetLabelGenerator(SimilarityDatasetLabelGenerator):
                 content_second.append((row['file'][1], row['class']))
 
                 # compute similarity scores here to be appended
-                content_similarities.append(self.compute_similarities(row['file'][0], row['file'][1]))
+                content_similarities.append(self.compute_similarities(row['file'][0], row['file'][1], self.no_ri))
 
         dataframe.apply(collector, axis=1)
 
@@ -288,7 +293,7 @@ class EnhancedSimilarityDatasetLabelGenerator(SimilarityDatasetLabelGenerator):
         return CombinedGenerator()
 
     @staticmethod
-    def compute_similarities(library: Spectra, unknown: Spectra) -> SimilarityTuple:
+    def compute_similarities(library: Spectra, unknown: Spectra, no_ri: bool = False) -> SimilarityTuple:
         """
         computes several different similaritiy scores
         :param value:
@@ -298,9 +303,18 @@ class EnhancedSimilarityDatasetLabelGenerator(SimilarityDatasetLabelGenerator):
 
         l = MSMSSpectrum(library.spectra, precursor_mz=library.precursor)
         u = MSMSSpectrum(unknown.spectra, precursor_mz=unknown.precursor)
+        reverse_similarity = u.reverse_similarity(l, 1)
+        msms_spectrum_similarity = u.spectral_similarity(l, 1)
+        precursor_distance = unknown.precursor - library.precursor
+
+        if no_ri is False:
+            retention_index_distance = unknown.ri - library.ri
+        else:
+            retention_index_distance = 0
+
         return SimilarityTuple(
-            reverse_similarity=u.reverse_similarity(l, 1),
-            msms_spectrum_similarity=u.spectral_similarity(l, 1),
-            precursor_distance=unknown.precursor - library.precursor,
-            retention_index_distance=unknown.ri - library.ri
+            reverse_similarity=reverse_similarity,
+            msms_spectrum_similarity=msms_spectrum_similarity,
+            precursor_distance=precursor_distance,
+            retention_index_distance=retention_index_distance
         )

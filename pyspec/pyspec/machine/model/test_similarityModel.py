@@ -7,12 +7,13 @@ from pyspec.machine.model.multi_cnn import Resnet50SimilarityModel
 from pyspec.machine.spectra import SingleEncoder
 
 
+@pytest.mark.parametrize("no_ri", [True, False])
 @pytest.mark.parametrize("limit", [3, 5, 10])
 @pytest.mark.parametrize("resample", [1, 3, 5])
 @pytest.mark.parametrize("batchsize", [16, 32, 64])
-def test_predict_resnet50(limit, resample, batchsize):
+def test_predict_resnet50(limit, resample, batchsize, no_ri):
     dataset = EnhancedSimilarityDatasetLabelGenerator(compound_limit=100, spectra_per_compounds=limit,
-                                                      resample=resample)
+                                                      resample=resample, no_ri=no_ri)
 
     model = Resnet50SimilarityModel(
         width=125,
@@ -42,3 +43,5 @@ def test_predict_resnet50(limit, resample, batchsize):
             raise e
 
     data.tail(10).apply(predictor, axis=1)
+
+
