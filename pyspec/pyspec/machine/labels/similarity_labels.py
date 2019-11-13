@@ -1,5 +1,6 @@
 import random
-from typing import Optional, NamedTuple
+import traceback
+from typing import Optional, NamedTuple, List
 
 import tabulate
 from keras.utils import Sequence
@@ -12,6 +13,18 @@ from pyspec.machine.persistence.model import db, MZMLSampleRecord, MZMLMSMSSpect
     MZMZMSMSSpectraClassificationRecord
 from pyspec.machine.spectra import Encoder
 from pyspec.parser.pymzl.msms_spectrum import MSMSSpectrum
+import numpy as np
+
+
+def top_n_ions(spectra: str, top_n: int):
+    """
+    computes top n ions
+    :param spectra:
+    :param top_n:
+    :return:
+    """
+    pairs = sorted(map(lambda x: x.split(":"), spectra.split(" ")), key=lambda x: x[1])
+    return np.array(pairs[0:top_n])
 
 
 class SimilarityTuple(NamedTuple):
@@ -25,6 +38,38 @@ class SimilarityTuple(NamedTuple):
     precursor_distance: Optional[float] = 0
 
     retention_index_distance: Optional[float] = 0
+
+    top_ions: int = 10
+
+    library_top_ions: np.ndarray = None
+
+    unknown_top_ions: np.ndarray = None
+
+    def to_nd(self):
+        """
+        generates a similarity tuple array representation for us
+        :return: 
+        """
+        if self.library_top_ions is None:
+            self.library_top_ions = np.empty((self.top_ions, np.float))
+        if self.unknown_top_ions is None:
+            self.unknown_top_ions = np.empty((self.top_ions, np.float))
+
+        return np.append(
+            np.array([self.reverse_similarity, self.msms_spectrum_similarity, self.precursor_distance,
+                      self.retention_index_distance]), np.append(
+                self.library_top_ions,
+                self.unknown_top_ions
+            )
+        )
+
+    def compute_size(self) -> int:
+        """
+        computes the size of the tuple for ease of usage. Depends obviously on the utilized attribues and needs to be adjusted
+        if this gets changed.
+        :return:
+        """
+        return len(list(self)) - 3 + 2 * self.top_ions
 
 
 class SimilarityDatasetLabelGenerator(LabelGenerator):
@@ -125,6 +170,7 @@ class SimilarityDatasetLabelGenerator(LabelGenerator):
                         training=training
                     )
             except ValueError as e:
+                traceback.print_exc()
                 pass
 
         groups = spectra.groupby(['name'])
@@ -245,6 +291,9 @@ class EnhancedSimilarityDatasetLabelGenerator(SimilarityDatasetLabelGenerator):
         :return:
         """
 
+        encoder.width = width
+        encoder.height = height
+
         content_first = []
         content_second = []
         content_similarities = []
@@ -316,5 +365,8 @@ class EnhancedSimilarityDatasetLabelGenerator(SimilarityDatasetLabelGenerator):
             reverse_similarity=reverse_similarity,
             msms_spectrum_similarity=msms_spectrum_similarity,
             precursor_distance=precursor_distance,
-            retention_index_distance=retention_index_distance
+            retention_index_distance=retention_index_distance,
+            library_top_ions=top_n_ions(library.spectra, 10),
+            unknown_top_ions=top_n_ions(unknown.spectra, 10),
+            top_ions=10
         )

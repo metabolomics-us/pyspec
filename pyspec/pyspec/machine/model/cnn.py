@@ -31,7 +31,7 @@ class CNNClassificationModel(ABC):
         return self.__class__.__name__
 
     def __init__(self, width: int, height: int, channels: int, plots: bool = False, batch_size=15, seed=12345,
-                 early_stop=False, tensor_board=True, workers: Optional[int] = None):
+                 early_stop=False, tensor_board=True, workers: Optional[int] = None, save_best: bool = True):
         """
         defines the model size
         :param width:
@@ -48,6 +48,7 @@ class CNNClassificationModel(ABC):
         self.seed = seed
         self.early_stop = early_stop
         self.tensor_board = tensor_board
+        self.save_best = save_best
 
         if workers is None:
             workers = multiprocessing.cpu_count() - 2
@@ -156,6 +157,9 @@ class CNNClassificationModel(ABC):
         if self.plots:
             self.plot_training(epochs, history, input)
 
+        if self.save_best is False:
+            model.save_weights(self.get_model_file(input))
+            
         del model
         from keras import backend as K
         K.clear_session()
@@ -193,20 +197,22 @@ class CNNClassificationModel(ABC):
         """
 
         os.makedirs(Path(self.get_model_file(input=input)).parent, exist_ok=True)
-        if gpus > 1:
-            callbacks.append(
-                MultiGPUModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,
-                                        save_best_only=True,
-                                        mode='max')
 
-            )
-        else:
-            callbacks.append(
-                ModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,
-                                save_best_only=True,
-                                mode='max')
+        if self.save_best is True:
+            if gpus > 1:
+                callbacks.append(
+                    MultiGPUModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,
+                                            save_best_only=True,
+                                            mode='max')
 
-            )
+                )
+            else:
+                callbacks.append(
+                    ModelCheckpoint(self.get_model_file(input=input), monitor='val_acc', verbose=verbose,
+                                    save_best_only=True,
+                                    mode='max')
+
+                )
 
         if self.early_stop is True:
             earlystop = EarlyStopping(patience=10)
@@ -290,6 +296,9 @@ class CNNClassificationModel(ABC):
         m = self.build()
         m.load_weights(self.get_model_file(input))
         return m
+
+    def is_model_trained(self, input: str) -> bool:
+        return os.path.exists(self.get_model_file(input))
 
     def get_name(self) -> str:
 

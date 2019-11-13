@@ -18,7 +18,7 @@ class SimilarityMeasureGenerator(Sequence):
         """
         self.data = data
         self.batch_size = batch_size
-        self.shape = (len(data[0]),)
+        self.shape = (data[0].compute_size(),)
 
         self.labels = list(set(map(lambda x: x[1], data)))
         self.class_indices = dict(zip(self.labels, range(len(self.labels))))
@@ -40,7 +40,7 @@ class SimilarityMeasureGenerator(Sequence):
         for i, value in enumerate(data):
             try:
 
-                X[i] = np.array(list(value[0]))
+                X[i] = value[0].to_nd()  # np.array(list(value[0]))
 
                 # Store class
                 label = self.class_indices[value[1]]

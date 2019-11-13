@@ -1,17 +1,16 @@
 from abc import abstractmethod
 from typing import Optional
 
+import numpy as np
 from keras import Model, Input
 from keras.applications import ResNet50
-from keras.layers import Dense, concatenate, Conv2D, MaxPooling2D, Flatten
+from keras.layers import Dense, concatenate, Flatten
 from keras.utils import plot_model
 
 from pyspec.loader import Spectra
-from pyspec.machine.labels.similarity_labels import SimilarityTuple, SimilarityDatasetLabelGenerator, \
-    EnhancedSimilarityDatasetLabelGenerator
+from pyspec.machine.labels.similarity_labels import SimilarityTuple, EnhancedSimilarityDatasetLabelGenerator
 from pyspec.machine.model.cnn import MultiInputCNNModel
 from pyspec.machine.spectra import Encoder
-import numpy as np
 
 
 class SimilarityModel(MultiInputCNNModel):
@@ -82,8 +81,7 @@ class SimilarityModel(MultiInputCNNModel):
 
         measures = EnhancedSimilarityDatasetLabelGenerator.compute_similarities(first, second, no_ri=no_ri)
 
-        measures = list(measures)
-        measures = np.array(measures)
+        measures = measures.to_nd()
         measures = np.expand_dims(measures.reshape((len(measures),)), axis=0)
         request = [encoded_1, encoded_2, measures]
 
