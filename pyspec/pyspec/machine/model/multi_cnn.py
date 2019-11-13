@@ -21,7 +21,7 @@ class SimilarityModel(MultiInputCNNModel):
     def build(self) -> Model:
         first_spectra = Input(shape=(self.width, self.height, self.channels))
         second_spectra = Input(shape=(self.width, self.height, self.channels))
-        similarity_measures = Input(shape=(len(list(SimilarityTuple())),))
+        similarity_measures = Input(shape=(SimilarityTuple().compute_size(),))
         x = self.rename_layers(self.create_cnn(first_spectra), "library")
         y = self.rename_layers(self.create_cnn(second_spectra), "unknown")
         xy = self.rename_layers(self.create_similarity_measures_nn(similarity_measures), "measures")

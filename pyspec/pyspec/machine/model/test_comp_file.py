@@ -8,10 +8,10 @@ from pyspec.machine.labels.similarity_labels import EnhancedSimilarityDatasetLab
 from pyspec.machine.model.multi_cnn import Resnet50SimilarityModel
 from pyspec.machine.spectra import SingleEncoder
 
-EPOCHS = 2  # 10
-COMPOUNDS = 10 # None
-SPECTRA = 2  # 50
-RESAMPLE = 2  # 5
+EPOCHS = 10
+COMPOUNDS = None
+SPECTRA = 50
+RESAMPLE = 5
 BS = 32
 NO_RI = True
 
@@ -55,7 +55,7 @@ def test_comp_file():
                                                               resample=RESAMPLE, no_ri=NO_RI)
 
             model.train(MODEL_NAME, generator=dataset,
-                        encoder=SingleEncoder(), gpus=3,
+                        encoder=SingleEncoder(),
                         epochs=EPOCHS)
             m = model.get_model(MODEL_NAME)
         else:
