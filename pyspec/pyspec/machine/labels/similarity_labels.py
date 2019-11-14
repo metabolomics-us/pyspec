@@ -23,8 +23,19 @@ def top_n_ions(spectra: str, top_n: int):
     :param top_n:
     :return:
     """
-    pairs = sorted(map(lambda x: x.split(":"), spectra.split(" ")), key=lambda x: x[1])
-    return np.array(pairs[0:top_n])
+    pairs = sorted(map(lambda x: x.split(":")[0], spectra.split(" ")), key=lambda x: x[1])
+    result = np.array(pairs[0:top_n])
+
+    return result
+
+
+def padarray(A, size):
+    t = size - len(A)
+    if t < 0:
+        # actually need to drop them
+        return A[0:A.size - abs(t)]
+    else:
+        return np.pad(A, pad_width=(0, t), mode='constant')
 
 
 class SimilarityTuple(NamedTuple):
@@ -55,11 +66,14 @@ class SimilarityTuple(NamedTuple):
         if self.unknown_top_ions is None:
             self.unknown_top_ions = np.empty((self.top_ions, np.float))
 
+        library_top_ions = padarray(self.library_top_ions, self.top_ions)
+        unknown_top_ions = padarray(self.unknown_top_ions, self.top_ions)
+
         return np.append(
             np.array([self.reverse_similarity, self.msms_spectrum_similarity, self.precursor_distance,
                       self.retention_index_distance]), np.append(
-                self.library_top_ions,
-                self.unknown_top_ions
+                library_top_ions,
+                unknown_top_ions
             )
         )
 

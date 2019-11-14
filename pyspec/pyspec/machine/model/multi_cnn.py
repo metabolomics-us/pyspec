@@ -57,7 +57,7 @@ class SimilarityModel(MultiInputCNNModel):
         """
 
     def predict(self, input: str, first: Spectra, second: Spectra, encode: Encoder,
-                model: Optional[Model] = None, no_ri: bool = False) -> float:
+                model: Optional[Model] = None, no_ri: bool = False, plot: bool = False) -> float:
         """
         predicts a similarity score between 2 different spectra, with the given encode.
         score is between 0 and 1. 0 for none identical at all, 1 for identical match
@@ -81,12 +81,29 @@ class SimilarityModel(MultiInputCNNModel):
 
         measures = EnhancedSimilarityDatasetLabelGenerator.compute_similarities(first, second, no_ri=no_ri)
 
+        size = measures.compute_size()
         measures = measures.to_nd()
-        measures = np.expand_dims(measures.reshape((len(measures),)), axis=0)
+        measures = np.expand_dims(measures.reshape((size,)), axis=0)
         request = [encoded_1, encoded_2, measures]
 
         prediction = model.predict(request, batch_size=self.batch_size)[0][1]
         # assemble to numpy array
+
+        if plot is True:
+            import matplotlib.pyplot as plt
+            first_s = encoded_1[0]
+            second_s = encoded_2[0]
+            similarities = measures
+
+            fig2 = plt.figure()
+            ax2 = fig2.add_subplot(1, 2, 1)
+            ax2.imshow(first_s)
+            ax2.set_title(first.name)
+            ax3 = fig2.add_subplot(1, 2, 2)
+            ax3.set_title(second.name)
+            ax3.imshow(second_s)
+
+            plt.show()
         return prediction
 
 

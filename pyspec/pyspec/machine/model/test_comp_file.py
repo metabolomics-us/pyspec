@@ -8,10 +8,10 @@ from pyspec.machine.labels.similarity_labels import EnhancedSimilarityDatasetLab
 from pyspec.machine.model.multi_cnn import Resnet50SimilarityModel
 from pyspec.machine.spectra import SingleEncoder
 
-EPOCHS = 10
-COMPOUNDS = None
-SPECTRA = 50
-RESAMPLE = 5
+EPOCHS = 2 #10
+COMPOUNDS = 20 #None
+SPECTRA = 5 #50
+RESAMPLE = 2 #5
 BS = 32
 NO_RI = True
 
@@ -79,7 +79,7 @@ def test_comp_file():
     for unknown in spectra:
         for library in spectra:
             score = model.predict(MODEL_NAME, unknown, library, SingleEncoder(), model=m,
-                                  no_ri=NO_RI)
+                                  no_ri=NO_RI, plot = True)
             if unknown.name == library.name:
                 print(
                     "from: {} to: {} score: {:.4f}   <= should be perfect match".format(unknown.name, library.name,
