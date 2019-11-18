@@ -1,3 +1,5 @@
+import traceback
+from collections import OrderedDict
 from typing import List, Any, Tuple
 
 import keras
@@ -21,7 +23,7 @@ class SimilarityMeasureGenerator(Sequence):
         self.shape = (data[0].compute_size(),)
 
         self.labels = list(set(map(lambda x: x[1], data)))
-        self.class_indices = dict(zip(self.labels, range(len(self.labels))))
+        self.class_indices = OrderedDict(dict(zip(self.labels, range(len(self.labels)))))
 
         self.n_classes = n_classes
 
@@ -86,7 +88,7 @@ class SpectraDataGenerator(Sequence):
         # build labels, based on index
 
         self.labels = list(set(map(lambda x: x[1], spectra)))
-        self.class_indices = dict(zip(self.labels, range(len(self.labels))))
+        self.class_indices = OrderedDict(dict(zip(self.labels, range(len(self.labels)))))
 
     def __data_generation(self, spectra: List[Tuple[Spectra, str]]):
         """
@@ -103,13 +105,25 @@ class SpectraDataGenerator(Sequence):
             try:
                 encoded = self.encoder.encode(spec[0])
                 image = np.fromstring(encoded, dtype='uint8')
-                image = image.reshape((self.encoder.width, self.encoder.height, 3))
-                image = np.expand_dims(image, axis=0)
+                image_rgb = image.reshape((self.encoder.width, self.encoder.height, 3))
+                image = np.expand_dims(image_rgb, axis=0)
                 X[i] = image
 
                 # Store class
                 label = self.class_indices[spec[1]]
                 y[i] = label
+
+            #               just plotting all the spectra which are used for training
+            #               try:
+            #                   import matplotlib.pyplot as plt
+
+            #                   fig2 = plt.figure()
+            #                   ax2 = fig2.add_subplot(1, 1, 1)
+            #                   ax2.imshow(image_rgb)
+            #                   plt.show()
+            #               except Exception as e:
+            #                   traceback.print_exc()
+
             except Exception as e:
                 pass
 
