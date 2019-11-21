@@ -9,10 +9,10 @@ from pyspec.machine.model.multi_cnn import Resnet50SimilarityModel
 from pyspec.machine.spectra import SingleEncoder
 
 EPOCHS = 10
-COMPOUNDS = None
-SPECTRA = 50
-RESAMPLE = 5 #5
-BS = 32
+COMPOUNDS = 100 #None
+SPECTRA = 5
+RESAMPLE = 5  # 5
+BS = 512
 NO_RI = True
 
 
@@ -44,7 +44,8 @@ def test_comp_file():
         height=125,
         channels=3,
         plots=False,
-        batch_size=BS
+        batch_size=BS,
+        workers=1
     )
 
     try:
@@ -56,7 +57,8 @@ def test_comp_file():
 
             model.train(MODEL_NAME, generator=dataset,
                         encoder=SingleEncoder(),
-                        epochs=EPOCHS)
+                        epochs=EPOCHS,
+                        gpus=1)
             m = model.get_model(MODEL_NAME)
         else:
             print("using pre trained model...")
@@ -79,7 +81,7 @@ def test_comp_file():
     for unknown in spectra:
         for library in spectra:
             score = model.predict(MODEL_NAME, unknown, library, SingleEncoder(), model=m,
-                                  no_ri=NO_RI, plot = False)
+                                  no_ri=NO_RI, plot=False)
             if unknown.name == library.name:
                 print(
                     "from: {} to: {} score: {:.4f}   <= should be perfect match".format(unknown.name, library.name,
