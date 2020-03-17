@@ -23,7 +23,7 @@ parser.add_argument("--txt", action="store", help="do you want to store TXT data
 parser.add_argument("--dimension", help="the size of the image to be generated", default=512)
 parser.add_argument("--min_mz", help="the minimum mass", default=0, type=int)
 parser.add_argument("--max_mz", help="the maximum mass", default=2000, type=int)
-parser.add_argument("--max_intensity", help="the maximum mass", default=10000, type=int)
+parser.add_argument("--max_intensity", help="the maximum intensity", default=10000, type=int)
 
 parser.add_argument("--clob", help="clob pattern to filter by", default="*.mzml", type=str)
 

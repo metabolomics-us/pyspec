@@ -1,4 +1,5 @@
 import os
+import traceback
 from typing import List, Optional
 
 import math
@@ -16,8 +17,8 @@ class MSMSFinder:
     finds all the MSMS spectra in the given file and if it's an url, download it first
     """
 
-    def toSpectra(self, spectra: Spectrum) -> Spectra:
-        peaks = spectra.peaks("centroided")
+    def toSpectra(self, spectra: Spectrum, mode: str = "centroided") -> Spectra:
+        peaks = spectra.peaks(mode)
 
         f = lambda x: "{}:{}".format(x[0], x[1])
         result = []
@@ -49,7 +50,7 @@ class MSMSFinder:
             reader = pymzml.run.Reader(file_name)
         except Exception as e:
 
-            file_name = self.download_rawdata(msmsSource, "data",force=True)
+            file_name = self.download_rawdata(msmsSource, "data", force=True)
             reader = pymzml.run.Reader(file_name)
 
         def evaluate(spectra):
@@ -68,16 +69,21 @@ class MSMSFinder:
             else:
                 callback(spectra, file_name)
 
+        # just let them first we are starting now
+        callback(None, file_name)
+
         for spectra in tqdm(reader, total=reader.get_spectrum_count(),
                             unit='spectra',
                             unit_scale=True, leave=True, desc=f"analyzing spectra in {file_name}"):
+
+            # DO NOT DO ANY modifications
             spectra: Spectrum = spectra
-            spectra.estimatedNoiseLevel()
-            spectra.remove_noise()
+            try:
+                evaluate(spectra)
+            except Exception as e:
+                traceback.print_exc()
 
-            evaluate(spectra)
-
-    def download_rawdata(self, source, dir: str = "data", force:bool = False):
+    def download_rawdata(self, source, dir: str = "data", force: bool = False):
         """
         downloads a rawdata file and stores it in the local directory
         :param source:

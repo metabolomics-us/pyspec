@@ -9,7 +9,7 @@ from keras.callbacks import ModelCheckpoint, TensorBoard
 from keras.utils import multi_gpu_model
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras_preprocessing.image import ImageDataGenerator
 from pyspec.loader import Spectra
@@ -75,10 +75,18 @@ class CNNClassificationModel(ABC):
         sess = tf.Session(config=config)
         return sess
 
-    def train(self, input: str, generator: LabelGenerator, test_size=0.20, epochs=5, gpus=None, verbose=1):
+    def train(self, input: str, generator: LabelGenerator, encoder: Encoder, test_size: Optional[float] = 0.20,
+              epochs=5, gpus=None,
+              verbose=1):
         """
-        trains a model for us, based on the input
-        :param input:
+
+        :param input: location to the input for the label generator
+        :param generator: which label generator to use
+        :param encoder: an encoder how to encode the loaded data
+        :param test_size: None, if label provider provides test/training data, otherwise a float between 0-1
+        :param epochs: how many epochs you would like to train for
+        :param gpus: None to use all gpus, otherwise a number
+        :param verbose: do you want verbose logging
         :return:
         """
         if gpus is None:
@@ -93,48 +101,15 @@ class CNNClassificationModel(ABC):
         callbacks = [learning_rate_reduction]
 
         self.configure_checkpoints(callbacks, gpus, input, verbose)
-        dataframe = generator.generate_dataframe(input)
-
-        assert dataframe['file'].apply(lambda x: os.path.exists(x)).all(), 'please ensure all files exist!'
-
-        train_df, validate_df = train_test_split(dataframe, test_size=test_size, random_state=42)
+        train_df, validate_df = self.generate_dataset(generator, input, test_size)
         train_df = train_df.reset_index(drop=True)
         validate_df = validate_df.reset_index(drop=True)
-
-        #       if self.plots:
-        #           train_df['class'].value_counts().plot.bar()
-        #           plt.title("training classes {}".format(self.get_name()))
-        #           plt.show()
-
-        #           validate_df['class'].value_counts().plot.bar()
-        #           plt.title("validations classes {}".format(self.get_name()))
-        #           plt.show()
 
         total_train = train_df.shape[0]
         total_validate = validate_df.shape[0]
 
-        train_datagen = ImageDataGenerator()
-
-        train_generator = train_datagen.flow_from_dataframe(
-            train_df,
-            None,
-            x_col='file',
-            y_col='class',
-            target_size=(self.width, self.height),
-            class_mode='categorical',
-            batch_size=self.batch_size,
-        )
-
-        validation_datagen = ImageDataGenerator()
-        validation_generator = validation_datagen.flow_from_dataframe(
-            validate_df,
-            None,
-            x_col='file',
-            y_col='class',
-            target_size=(self.width, self.height),
-            class_mode='categorical',
-            batch_size=self.batch_size,
-        )
+        train_generator = self.generate_training_generator(train_df, generator)
+        validation_generator = self.generate_validation_generator(validate_df, generator)
 
         set_session(self.configure_session())
         model = self.build()
@@ -166,6 +141,64 @@ class CNNClassificationModel(ABC):
         del model
         from keras import backend as K
         K.clear_session()
+
+    def generate_dataset(self, generator: LabelGenerator, input: str, test_size: Optional[float] = None):
+        """
+        generates the test and training data for us
+        :param generator:
+        :param input:
+        :param test_size:
+        :return:
+        """
+        dataframe = generator.generate_dataframe(input)
+
+        # use pre defined split of the data
+        if test_size is None:
+            return dataframe[0], dataframe[1]
+        elif generator.contains_test_data() is False:
+            if test_size is None:
+                # forcing a testsize
+                test_size = 0.2
+            return train_test_split(dataframe[0], test_size=test_size, random_state=42)
+        else:
+            # assume we need to split the data
+            return train_test_split(dataframe[0], test_size=test_size, random_state=42)
+
+    def generate_validation_generator(self, validate_df: DataFrame, generator: LabelGenerator):
+        """
+        generates a validation generator for based on the validation dataframe
+        :param validate_df:
+        :return:
+        """
+        validation_datagen = ImageDataGenerator()
+        validation_generator = validation_datagen.flow_from_dataframe(
+            validate_df,
+            None,
+            x_col='file',
+            y_col='class',
+            target_size=(self.width, self.height),
+            class_mode='categorical',
+            batch_size=self.batch_size,
+        )
+        return validation_generator
+
+    def generate_training_generator(self, train_df: DataFrame, generator: LabelGenerator):
+        """
+        generate a training generator for us based on the training data frame
+        :param train_df:
+        :return:
+        """
+        train_datagen = ImageDataGenerator()
+        train_generator = train_datagen.flow_from_dataframe(
+            train_df,
+            None,
+            x_col='file',
+            y_col='class',
+            target_size=(self.width, self.height),
+            class_mode='categorical',
+            batch_size=self.batch_size,
+        )
+        return train_generator
 
     def configure_checkpoints(self, callbacks, gpus, input, verbose):
         """
@@ -263,6 +296,33 @@ class CNNClassificationModel(ABC):
 
         return dataframe
 
+    def get_model(self, input):
+        m = self.build()
+        m.load_weights(self.get_model_file(input))
+        return m
+
+    @abstractmethod
+    def predict_from_spectra(self, input: str, spectra: Spectra, encoder: Encoder) -> str:
+        """
+        predicts the class from the given spectra
+        :param spectra:
+        :return:
+        """
+
+    def get_name(self) -> str:
+
+        """
+        returns the name of this model, by default this is the concrete class name
+        :return:
+        """
+        return "{}_bs_{}".format(self.__class__.__name__, self.batch_size)
+
+
+class SingleInputCNNModel(CNNClassificationModel, ABC):
+    """
+    works on a single input
+    """
+
     def predict_from_files(self, input: str, files: List[str]) -> List[Tuple[str, str]]:
         """
         predicts from a list of files and returns a list of tuples
@@ -310,7 +370,7 @@ class CNNClassificationModel(ABC):
 
         for file in os.listdir(dict):
             f = os.path.abspath("{}/{}".format(dict, file))
-            
+
             if os.path.isfile(f):
                 dataframe = DataFrame([{'file': f}])
 
@@ -331,11 +391,6 @@ class CNNClassificationModel(ABC):
                 cat = np.argmax(predict, axis=-1)[0]
                 callback(file, cat, full_path=f)
 
-    def get_model(self, input):
-        m = self.build()
-        m.load_weights(self.get_model_file(input))
-        return m
-
     def predict_from_spectra(self, input: str, spectra: Spectra, encoder: Encoder) -> str:
         """
         predicts the class from the given spectra
@@ -354,10 +409,8 @@ class CNNClassificationModel(ABC):
         y_classes = y_proba.argmax(axis=-1)
         return y_classes[0]
 
-    def get_name(self) -> str:
 
-        """
-        returns the name of this model, by default this is the concrete class name
-        :return:
-        """
-        return "{}_bs_{}".format(self.__class__.__name__, self.batch_size)
+class MultiInputCNNModel(CNNClassificationModel, ABC):
+    """
+    supports multiple inputs
+    """

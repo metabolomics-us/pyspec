@@ -59,6 +59,8 @@ class MachineFactory:
 
         if name is None:
             name = model_config['default']
+        elif '.' not in name:
+            name = "pyspec.machine.model.application.{}".format(name)
 
         model: CNNClassificationModel = self.factory(name)(
             width=int(model_config.get("width")),
@@ -89,7 +91,7 @@ class MachineFactory:
         return cls
 
     def train(self, input: str, model: Optional[CNNClassificationModel] = None, generator: Optional = None,
-              gpus: int = None):
+              gpus: int = None, encoder: Optional = None):
         """
         trains the model using the internal configuration
         :param model:
@@ -99,6 +101,9 @@ class MachineFactory:
 
         if model is None:
             model = self.load_model()
+
+        if encoder is None:
+            encoder = self.load_encoder()
 
         if generator is None:
             generator = self.load_generator()
@@ -110,5 +115,5 @@ class MachineFactory:
             epochs=int(train_config['epoch']),
             gpus=int(train_config['gpus']) if gpus is None else int(gpus),
             verbose=int(train_config['verbose']),
-
+            encoder=encoder
         )
