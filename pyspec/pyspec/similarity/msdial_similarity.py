@@ -16,9 +16,9 @@ def _sum_ions_in_mass_window(peaks: List, starting_idx: int, focused_mz: float, 
     """
     find ions in peak list within the given tolerance of the given focused m/z
     :param peaks:
-    :param starting_idx:
-    :param focused_mz:
-    :param tolerance:
+    :param starting_idx: index from which to start ion  matching
+    :param focused_mz: target m/z to match
+    :param tolerance: m/z match tolerance
     :return: the total intensity of matching ions and the updated starting index
     """
 
@@ -38,7 +38,7 @@ def _sum_ions_in_mass_window(peaks: List, starting_idx: int, focused_mz: float, 
 
 def _cosine_similarity_from_peak_lists(s_mass_list: List, lib_mass_list: List,
                                        base_s: float, base_lib: float, peak_count_penalty: bool,
-                                       reverse_sim: bool = False, cutoff: float = 0.01) -> float:
+                                       reverse_sim: bool = False, intensity_cutoff: float = 0.01) -> float:
     """
     helper function to calculate cosine similarity for reverse and symmetric similarity methods
     :param s_mass_list: experimental ions
@@ -47,7 +47,7 @@ def _cosine_similarity_from_peak_lists(s_mass_list: List, lib_mass_list: List,
     :param base_lib: library base peak intensity
     :param peak_count_penalty: whether to apply a penalty for low peak counts
     :param reverse_sim: whether this is a reverse similarity calculation
-    :param cutoff: relative intensity cutoff for including ions
+    :param intensity_cutoff: relative intensity cutoff for including ions
     :return:
     """
 
@@ -82,10 +82,10 @@ def _cosine_similarity_from_peak_lists(s_mass_list: List, lib_mass_list: List,
         # ignore ions if intensity is less than the cutoff
         # the mass list considered depends on whether we're doing a symmetric or reverse similarity
         if reverse_sim:
-            if lib_mass_list[i][1] < cutoff:
+            if lib_mass_list[i][1] < intensity_cutoff:
                 continue
         else:
-            if s_mass_list[i][1] < cutoff:
+            if s_mass_list[i][1] < intensity_cutoff:
                 continue
 
         scalar_s += s_mass_list[i][0] * s_mass_list[i][1]
@@ -99,7 +99,7 @@ def _cosine_similarity_from_peak_lists(s_mass_list: List, lib_mass_list: List,
 
 
 
-def gaussian_similarity(actual, reference, tolerance: float):
+def gaussian_similarity(actual: float, reference: float, tolerance: float) -> float:
     """
     generates a Gaussian similarity between actual and reference values (or numpy arrays) with the given
     tolerance as the allowable spread
@@ -112,12 +112,13 @@ def gaussian_similarity(actual, reference, tolerance: float):
     return np.exp(-0.5 * pow((actual - reference) / tolerance, 2))
 
 
-def presence_similarity(s, lib, tolerance: float):
+def presence_similarity(s, lib, tolerance: float, precursor_cutoff: float = None) -> float:
     """
     calculate the Jaccard/presence similarity of ions in two spectra
     :param s: experimental spectrum
     :param lib: library spectrum
     :param tolerance: tolerance ion comparisons
+    :param precursor_cutoff: ignore ions including and beyond the given precursor m/z
     :return:
     """
 
@@ -127,6 +128,9 @@ def presence_similarity(s, lib, tolerance: float):
     min_mz = lib_peaks[0][0]
     max_mz = lib_peaks[-1][0]
     focused_mz = min_mz
+
+    if precursor_cutoff is not None:
+        max_mz = min(max_mz, precursor_cutoff - tolerance)
     
     max_lib_intensity = max(intensity for mz, intensity in lib_peaks)
     
@@ -159,7 +163,7 @@ def presence_similarity(s, lib, tolerance: float):
         return s_counter / lib_counter
 
 
-def reverse_similarity(s, lib, tolerance: float, peak_count_penalty: bool = True):
+def reverse_similarity(s, lib, tolerance: float, peak_count_penalty: bool = True, precursor_cutoff: float = None):
     """
     calculate the reverse similarity between two spectra (i.e., the cosine similarity restricted to ions
     present in the lib spectrum). note that this is not a symmetric similarity method
@@ -167,6 +171,7 @@ def reverse_similarity(s, lib, tolerance: float, peak_count_penalty: bool = True
     :param lib: library spectrum
     :param tolerance: tolerance ion comparisons
     :param peak_count_penalty: whether to apply a penalty for low peak counts
+    :param precursor_cutoff: ignore ions including and beyond the given precursor m/z
     :return:
     """
 
@@ -176,6 +181,9 @@ def reverse_similarity(s, lib, tolerance: float, peak_count_penalty: bool = True
     min_mz = lib_peaks[0][0]
     max_mz = lib_peaks[-1][0]
     focused_mz = min_mz
+
+    if precursor_cutoff is not None:
+        max_mz = min(max_mz, precursor_cutoff - tolerance)
     
     i_s, i_lib = 0, 0
     base_s, base_lib = 0, 0
@@ -217,13 +225,14 @@ def reverse_similarity(s, lib, tolerance: float, peak_count_penalty: bool = True
                                                   peak_count_penalty, reverse_sim=True)
 
 
-def spectral_similarity(s, lib, tolerance: float, peak_count_penalty: bool = True):
+def spectral_similarity(s, lib, tolerance: float, peak_count_penalty: bool = True, precursor_cutoff: float = None):
     """
     calculate the cosine similarity between two spectra
     :param s: experimental spectrum
     :param lib: library spectrum
     :param tolerance: tolerance ion comparisons
     :param peak_count_penalty: whether to apply a penalty for low peak counts
+    :param precursor_cutoff: ignore ions including and beyond the given precursor m/z
     :return:
     """
 
@@ -233,6 +242,9 @@ def spectral_similarity(s, lib, tolerance: float, peak_count_penalty: bool = Tru
     min_mz = min(s_peaks[0][0], lib_peaks[0][0])
     max_mz = max(s_peaks[-1][0], lib_peaks[-1][0])
     focused_mz = min_mz
+
+    if precursor_cutoff is not None:
+        max_mz = min(max_mz, precursor_cutoff - tolerance)
     
     i_s, i_lib = 0, 0
     base_s, base_lib = 0, 0
@@ -276,7 +288,8 @@ def spectral_similarity(s, lib, tolerance: float, peak_count_penalty: bool = Tru
 
 
 def total_msms_similarity(s, lib, ms1_tolerance, ms2_tolerance, s_precursor: float = None,
-                          lib_precursor: float = None, peak_count_penalty: bool = True):
+                          lib_precursor: float = None, peak_count_penalty: bool = True,
+                          precursor_cutoff: float = None):
 
     """
     calculate the total similarity by combining multiple similarity metrics with custom scaling
@@ -287,6 +300,7 @@ def total_msms_similarity(s, lib, ms1_tolerance, ms2_tolerance, s_precursor: flo
     :param s_precursor: precursor for experimental spectrum (only required when spectrum is not a MSMSSpectrum)
     :param lib_precursor: precursor for library spectrum (only required when spectrum is not a MSMSSpectrum)
     :param peak_count_penalty: whether to apply a penalty for low peak counts
+    :param precursor_cutoff: ignore ions including and beyond the given precursor m/z
     :return:
     """
 
@@ -307,9 +321,9 @@ def total_msms_similarity(s, lib, ms1_tolerance, ms2_tolerance, s_precursor: flo
     # raw similarities
     accurate_mass_sim = gaussian_similarity(s_precursor, lib_precursor, ms1_tolerance)
 
-    spectral_sim = spectral_similarity(s, lib, ms2_tolerance, peak_count_penalty=peak_count_penalty)
-    reverse_sim = reverse_similarity(s, lib, ms2_tolerance, peak_count_penalty=peak_count_penalty)
-    presence_sim = presence_similarity(s, lib, ms2_tolerance)
+    spectral_sim = spectral_similarity(s, lib, ms2_tolerance, peak_count_penalty=peak_count_penalty, precursor_cutoff=precursor_cutoff)
+    reverse_sim = reverse_similarity(s, lib, ms2_tolerance, peak_count_penalty=peak_count_penalty, precursor_cutoff=precursor_cutoff)
+    presence_sim = presence_similarity(s, lib, ms2_tolerance, precursor_cutoff=precursor_cutoff)
 
     # calculate MS/MS similarity
     msms_sim = (dot_product_factor * spectral_sim + reverse_dot_product_factor * reverse_sim + presence_percentage_factor * presence_sim)

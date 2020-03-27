@@ -11,6 +11,7 @@ def cosine_similarity(a, b, bin_size: float = None, scale_function: Callable = N
     :param a:
     :param b:
     :param bin_size: allow for a custom bin size, otherwise transform to nominal mass
+    :param scale_function: custom function to transform the bin weights using mass and intensity
     :return:
     """
 
@@ -40,6 +41,8 @@ def composite_similarity(a, b, bin_size: float = None, scale_function: Callable 
     note: this is currently only defined for nominal mass spectra and cannot be used with custom binning
     :param a:
     :param b:
+    :param bin_size: allow for a custom bin size, otherwise transform to nominal mass
+    :param scale_function: custom function to transform the bin weights using mass and intensity
     :return:
     """
 
