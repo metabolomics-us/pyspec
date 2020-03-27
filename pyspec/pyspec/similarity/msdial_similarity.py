@@ -8,52 +8,8 @@ import numpy as np
 
 from typing import List, Tuple
 
-from pyspec.loader import Spectra
 from pyspec.parser.pymzl.msms_spectrum import MSMSSpectrum
-
-
-def _transform_spectrum(spectrum) -> List:
-    """
-    transform a given spectrum from given format to a list of tuples/lists
-    :param spectrum:
-    :return:
-    """
-
-    if type(spectrum) == Spectra:
-        spectrum = spectrum.spectra
-
-    if type(spectrum) == str:
-        return sorted([tuple(map(float, x.split(':'))) for x in spectrum.split()])
-    elif type(spectrum) == MSMSSpectrum:
-        return spectrum.peaks('raw')
-    elif type(spectrum) == list and all(type(x) == list for x in spectrum):
-        return sorted(spectrum)
-    elif type(spectrum) == dict:
-        return sorted([(k, v) for k, v in spectrum.items()])
-    else:
-        raise Exception(f'invalid spectrum type: {type(spectrum)}')
-
-
-def _get_spectrum_peak_penalty(peak_count_penalty: bool, ion_count: int) -> float:
-    """
-    get the similarity penalty based on the provided ion count
-    :param peak_count_penalty:
-    :param ion_count:
-    :return:
-    """
-
-    if not peak_count_penalty:
-        return 1
-    elif ion_count == 1:
-        return 0.75
-    elif ion_count == 2:
-        return 0.88
-    elif ion_count == 3:
-        return 0.94
-    elif ion_count == 4:
-        return 0.97
-    else:
-        return 1
+from pyspec.similarity.util import _get_spectrum_peak_penalty, _transform_spectrum
 
 
 def _sum_ions_in_mass_window(peaks: List, starting_idx: int, focused_mz: float, tolerance: float) -> Tuple[float, int]:
@@ -338,7 +294,7 @@ def total_msms_similarity(s, lib, ms1_tolerance, ms2_tolerance, s_precursor: flo
         s_precursor = s.precursors[0][0]
         lib_precursor = lib.precursors[0][0]
     elif s_precursor is None or lib_precursor is None:
-        raise Exception('no precursor provided implictly through MSMSSpectrum objects or explicitly in function call')
+        raise Exception('no precursor provided implicitly through MSMSSpectrum objects or explicitly in function call')
 
     # scaling factors
     dot_product_factor = 3
