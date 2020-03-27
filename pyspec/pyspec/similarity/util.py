@@ -1,6 +1,6 @@
 import collections
 
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple, Union
 
 from pyspec.loader import Spectra
 from pyspec.parser.pymzl.msms_spectrum import MSMSSpectrum
@@ -8,6 +8,9 @@ from pyspec.parser.pymzl.msms_spectrum import MSMSSpectrum
 
 EPS_CORRECTION = 1.0e-6
 MZ_ROUND_CORRECTION = 0.2
+
+
+SpecTypes = Union[Spectra, MSMSSpectrum, List[List], str, dict]
 
 
 def _transform_spectrum_tuple(spectrum) -> List[Tuple[float, float]]:

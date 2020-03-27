@@ -2,10 +2,10 @@ import math
 
 from typing import Callable
 
-from pyspec.similarity.util import EPS_CORRECTION, _transform_binned_spectrum
+from pyspec.similarity.util import SpecTypes, EPS_CORRECTION, _transform_binned_spectrum
 
 
-def cosine_similarity(a, b, bin_size: float = None, scale_function: Callable = None) -> float:
+def cosine_similarity(a: SpecTypes, b: SpecTypes, bin_size: float = None, scale_function: Callable = None) -> float:
     """
     calculate the standard cosine similarity between two spectra
     :param a:
@@ -35,7 +35,7 @@ def cosine_similarity(a, b, bin_size: float = None, scale_function: Callable = N
         return product / normA / normB
 
 
-def composite_similarity(a, b, bin_size: float = None, scale_function: Callable = None) -> float:
+def composite_similarity(a: SpecTypes, b: SpecTypes, bin_size: float = None, scale_function: Callable = None) -> float:
     """
     calculate composite similarity between two spectra
     note: this is currently only defined for nominal mass spectra and cannot be used with custom binning
