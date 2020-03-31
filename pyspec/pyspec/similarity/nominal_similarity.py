@@ -1,9 +1,11 @@
 import math
 
+from typing import Callable
+
 from pyspec.similarity.util import EPS_CORRECTION, _transform_binned_spectrum
 
 
-def cosine_similarity(a, b, bin_size: float = None) -> float:
+def cosine_similarity(a, b, bin_size: float = None, scale_function: Callable = None) -> float:
     """
     calculate the standard cosine similarity between two spectra
     :param a:
@@ -14,9 +16,9 @@ def cosine_similarity(a, b, bin_size: float = None) -> float:
 
     # handle different input formats
     if type(a) != dict:
-        a = _transform_binned_spectrum(a, bin_size=bin_size)
+        a = _transform_binned_spectrum(a, bin_size=bin_size, scale_function=scale_function)
     if type(b) != dict:
-        b = _transform_binned_spectrum(b, bin_size=bin_size)
+        b = _transform_binned_spectrum(b, bin_size=bin_size, scale_function=scale_function)
 
     # calculate norm for each spectrum using all ions
     normA = sum(v * v for v in a.values())
@@ -32,7 +34,7 @@ def cosine_similarity(a, b, bin_size: float = None) -> float:
         return product / normA / normB
 
 
-def composite_similarity(a, b) -> float:
+def composite_similarity(a, b, bin_size: float = None, scale_function: Callable = None) -> float:
     """
     calculate composite similarity between two spectra
     note: this is currently only defined for nominal mass spectra and cannot be used with custom binning
@@ -43,9 +45,9 @@ def composite_similarity(a, b) -> float:
 
     # handle different input formats
     if type(a) != dict:
-        a = _transform_binned_spectrum(a)
+        a = _transform_binned_spectrum(a, bin_size=bin_size, scale_function=scale_function)
     if type(b) != dict:
-        b = _transform_binned_spectrum(b)
+        b = _transform_binned_spectrum(b, bin_size=bin_size, scale_function=scale_function)
 
     # identify shared ions and calculate cosine similarity
     shared_ions = sorted(x for x in set(a.keys()) & set(b.keys()) if a[x] > EPS_CORRECTION and b[x] > EPS_CORRECTION)

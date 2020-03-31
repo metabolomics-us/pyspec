@@ -39,7 +39,7 @@ def _transform_spectrum(spectrum) -> List:
     elif type(spectrum) == list and all(type(x) == list for x in spectrum):
         # sort list format
         return sorted(spectrum)
-    elif type(spectrum) == dict:
+    elif type(spectrum) in [dict, collections.defaultdict]:
         # handle dict format
         return sorted([(k, v) for k, v in spectrum.items()])
     else:
