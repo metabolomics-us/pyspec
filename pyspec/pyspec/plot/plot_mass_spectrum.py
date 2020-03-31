@@ -24,7 +24,7 @@ def _normalize(s, scale: float = 100):
         return sorted([(x[0], scale * x[1] / max_intensity) for x in s], key=lambda x: -x[1])
 
 
-def _plot_spectrum(spectrum, ax, reverse=False, scale=100, show_labels=True, n_labels=8, label_min_intensity=1, label_font_size=6):
+def _plot_spectrum(spectrum, ax, reverse=False, scale=100, show_labels=True, n_labels=8, label_min_intensity=1, label_font_size=6, mz_min=None, mz_max=None):
     """
     internal function to plot a spectrum on an axis
     :param spectrum:
@@ -42,7 +42,12 @@ def _plot_spectrum(spectrum, ax, reverse=False, scale=100, show_labels=True, n_l
     
     for i, (mz, intensity) in enumerate(_normalize(spectrum, scale=scale)):
         ax.plot([mz, mz], [0, intensity], 'r-' if reverse else 'b-', linewidth=1.25)
-    
+
+        if mz_min or mz_max:
+            mz_min = mz_min if mz_min else ax.get_xlim()[0]
+            mz_max = mz_max if mz_max else ax.get_xlim()[1]
+            ax.set_xlim((mz_min, mz_max))
+
         # Plot ion labels
         if show_labels and len(labels) < n_labels and intensity > label_min_intensity and all(abs(mz - x) > 10 for x in labels):
             height = intensity + 2
@@ -52,7 +57,7 @@ def _plot_spectrum(spectrum, ax, reverse=False, scale=100, show_labels=True, n_l
             labels.append(mz)
 
 
-def plot_mass_spectrum(spectrum, filename: str, title: str = None):
+def plot_mass_spectrum(spectrum, filename: str, title: str = None, mz_min=None, mz_max=None):
     """
     plot a single mass spectrum
     :param spectrum:
@@ -62,7 +67,7 @@ def plot_mass_spectrum(spectrum, filename: str, title: str = None):
     """
 
     fig, ax = plt.subplots(figsize=(12, 5))
-    _plot_spectrum(spectrum, ax)
+    _plot_spectrum(spectrum, ax, mz_min=mz_min, mz_max=mz_max)
 
     if title is not None:
         plt.title(title)
@@ -95,11 +100,11 @@ def _multiplot_config(fig, title: str = None):
     # axis labels using an additional full subplot
     fig.add_subplot(111, frameon=False)
     plt.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False)
-    plt.xlabel('Relative Intensity')
-    plt.ylabel('m/z')
+    plt.xlabel('m/z')
+    plt.ylabel('Relative Intensity')
 
 
-def plot_multiple_mass_spectra(spectra: List, filename: str, scale=100, labels: List[str] = None, title: str = None):
+def plot_multiple_mass_spectra(spectra: List, filename: str, scale=100, labels: List[str] = None, title: str = None, mz_min=None, mz_max=None):
     """
     plots a set of mass spectra in a single plot
     :param spectra:
@@ -115,14 +120,14 @@ def plot_multiple_mass_spectra(spectra: List, filename: str, scale=100, labels: 
 
     if labels is None:
         for s, ax in zip(spectra, axes):
-            _plot_spectrum(s, ax, scale=scale)
+            _plot_spectrum(s, ax, scale=scale, mz_min=mz_min, mz_max=mz_max)
             ax.set_ylim(0, 110)
 
     else:
         assert(len(labels) == len(spectra))
 
         for s, ax, label in zip(spectra, axes, labels):
-            _plot_spectrum(s, ax)
+            _plot_spectrum(s, ax, scale=scale, mz_min=mz_min, mz_max=mz_max)
             ax.set_ylim(0, 110)
             ax.set_title(label, y=0.9, fontsize=8, verticalalignment='top')
 
@@ -132,11 +137,11 @@ def plot_multiple_mass_spectra(spectra: List, filename: str, scale=100, labels: 
 
 
 
-def plot_head_to_tail_mass_spectra(spectrumA, spectrumB, filename: str, title: str = None):
+def plot_head_to_tail_mass_spectra(spectrumA, spectrumB, filename: str, title: str = None, mz_min=None, mz_max=None):
     fig, (ax1, ax2) = plt.subplots(2, sharex=True, figsize=(12, 5))
 
-    _plot_spectrum(spectrumA, ax1)
-    _plot_spectrum(spectrumB, ax2, reverse=True)
+    _plot_spectrum(spectrumA, ax1, mz_min=mz_min, mz_max=mz_max)
+    _plot_spectrum(spectrumB, ax2, mz_min=mz_min, mz_max=mz_max, reverse=True)
 
     ax1.set_ylim(0, 110)
     ax2.set_ylim(0, 110)
