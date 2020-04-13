@@ -23,7 +23,7 @@ class MSMSSpectrum(Spectrum):
         if isinstance(spectrum, str):
             # MoNA/SPLASH spectrum string format
             spectrum = [tuple(map(float, x.split(':'))) for x in spectrum.strip().split()]
-        
+
         if isinstance(spectrum, dict):
             # map format with m/z as key and intensity as value
             spectrum = [(k, v) for k, v in spectrum.items()]
@@ -83,3 +83,7 @@ class MSMSSpectrum(Spectrum):
         from pyspec.similarity.msdial_similarity import total_msms_similarity
         return total_msms_similarity(self, library_spectrum, ms1_tolerance, ms2_tolerance,
                                      peak_count_penalty=peak_count_penalty)
+
+    def entropy_similarity(self, library_spectrum: MSMSSpectrum, ms2_tolerance: float) -> float:
+        from pyspec.similarity.entropy_similarity import entropy_similarity_adaptor
+        return entropy_similarity_adaptor(self, library_spectrum, ms2_tolerance)
