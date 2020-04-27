@@ -8,8 +8,7 @@ import argparse
 import pathlib
 import requests
 
-
-MONA_URL = "https://mona.fiehnlab.ucdavis.edu/rest/spectra/search?query=compound.metaData=q='name==\"InChIKey\" and value==\"%s\"'"
+from pyspec.loader.mona import MoNALoader, MoNAQueryGenerator
 
 
 if __name__ == '__main__':
@@ -26,20 +25,17 @@ if __name__ == '__main__':
       for line in f:
         inchikey = line.strip()
 
-        if not inchikey:
-          continue
+        if inchikey:
+            print(inchikey)
 
-        print(inchikey)
-        r = requests.get(MONA_URL % inchikey)
+            # build query
+            query = MoNAQueryGenerator().query_by_inchikey(inchikey)
+            data = MoNALoader().query(query)
 
-        if r.status_code == 200:
-          data = r.json()
+            count = len(data)
+            submitters = sorted(set(x.library['library'] if x.library is not None else x.submitter['id'] for x in data))
+            is_fiehnlab = any(any(y in x.lower() for y in ['@ucdavis.edu', 'fiehn', 'fahfa', 'lipidblast']) for x in submitters)
 
-          count = len(data)
-          submitters = sorted(set(x['library']['library'] if 'library' in x else x['submitter']['id'] for x in data))
-          is_fiehnlab = any(any(y in x.lower() for y in ['@ucdavis.edu', 'fiehn', 'fahfa', 'lipidblast']) for x in submitters)
+            print(inchikey, count, is_fiehnlab, *submitters, sep=',', file=fout)
 
-          print(inchikey, count, is_fiehnlab, *submitters, sep=',', file=fout)
-        else:
-          print(f'\t{r.status_code}')
       

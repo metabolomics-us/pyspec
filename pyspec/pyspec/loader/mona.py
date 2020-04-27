@@ -74,7 +74,9 @@ class MoNALoader:
             name=name,
             ms_level=ms_level,
             inchiKey=inchikey,
-            properties={k: v for k, v in zip(property_names, property_values) if v is not None}
+            properties={k: v for k, v in zip(property_names, property_values) if v is not None},
+            submitter=spectrum['submitter'],
+            library=spectrum.get('library', None)
         )
 
 

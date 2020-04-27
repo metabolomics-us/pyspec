@@ -12,3 +12,5 @@ class Spectra(NamedTuple):
     inchiKey: Optional[str] = None
     splash: Optional[str] = None
     properties: dict = {}
+    submitter: Optional[dict] = None
+    library: Optional[dict] = None
