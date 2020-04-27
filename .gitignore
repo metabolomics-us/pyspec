@@ -1,3 +1,7 @@
+pyspec/tensorboard
+pyspec/upload
+pyspec/test_retrieved
+pyspec/retrieved
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

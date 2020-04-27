@@ -14,7 +14,6 @@ setup(name='pyspec',
       license='GPLv3',
       packages=find_packages(),
       scripts=[
-          "bin/bv_to_msp.py"
       ],
       setup_requires=['pytest-runner'],
       tests_require=[
@@ -24,7 +23,18 @@ setup(name='pyspec',
       install_requires=[
           "pandas",
           "requests",
-          "regex"
+          "regex",
+          "matplotlib",
+          "numba",
+          "sklearn",
+          "seaborn",
+          "joblib",
+          "peewee",
+          "tqdm",
+          "keras",
+          "psycopg2-binary",
+          "pillow",
+          "tensorflow-gpu"
       ],
       include_package_data=True,
       zip_safe=False,

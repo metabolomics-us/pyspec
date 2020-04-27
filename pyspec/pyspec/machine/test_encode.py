@@ -3,24 +3,12 @@ import multiprocessing
 import pytest
 from pymzml.spec import Spectrum
 
+from pyspec.machine.spectra import DualEncoder
 from pyspec.parser.pymzl.filters import MSMinLevelFilter
-from pyspec.loader.binbase import BinBaseLoader
-from pyspec.machine.spectra import Encoder
 from pyspec.parser.pymzl.msms_finder import MSMSFinder
 
-
-def test_encode():
-    # 1 load some binbase spectra
-    binbase = BinBaseLoader()
-    data = binbase.load_spectra_for_bin_as_list(13, 1000)
-
-    encoder = Encoder(intensity_max=10000000, min_mz=80, max_mz=500)
-    encoded = encoder.encodes(data, )
-
-
 sources = [
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/mzml/B1_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml",
-    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/B1_SA0002_TEDDYLipids_Pos_1GZR9_.mzml",
+    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/positive/B1A_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml"
 ]
 
 
@@ -28,13 +16,14 @@ sources = [
 def test_encode_msms(source):
     finder = MSMSFinder()
 
-    encoder = Encoder(intensity_max=1000, min_mz=0, max_mz=2000, directory="data/encoded")
+    encoder = DualEncoder(intensity_max=1000, min_mz=0, max_mz=2000, directory="data/encoded")
 
     data = []
 
     def callback(msms: Spectrum, file_name: str):
         nonlocal data
-        data.append(msms.convert(msms))
+        if msms is not None:
+            data.append(msms.convert(msms))
 
     finder.locate(msmsSource=source, callback=callback, filters=[MSMinLevelFilter(2)])
 

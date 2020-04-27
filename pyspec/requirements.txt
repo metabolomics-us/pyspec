@@ -1,6 +1,7 @@
 pandas
 requests
 pytest
+pymzml
 regex
 git+git://github.com/metabolomics-us/carpy.git#egg=stasis-client&subdirectory=stasis-client
 git+git://github.com/pymzml/pymzML.git
@@ -14,5 +15,10 @@ peewee
 joblib
 sklearn
 pillow
-tensorflow-gpu
+tensorflow-gpu==1.13.1
 numba
+tabulate
+pymongo
+boto3==1.7.22
+botocore==1.10.22
+colorama

@@ -5,8 +5,8 @@ from pyspec.parser.pymzl.filters import MSMinLevelFilter
 from pyspec.parser.pymzl.msms_finder import MSMSFinder
 
 sources = [
-    "http://luna.fiehnlab.ucdavis.edu/D%3A/mzml/B1_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml",  # should download this file
-    "data/B1_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml"  # should load this file directly
+    "http://eclipse.fiehnlab.ucdavis.edu/D%3A/lunabkup/mzml/teddy/batch1/positive/B1A_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml",
+    "data/B1A_SA0001_TEDDYLipids_Pos_1RAR7_MSMS.mzml"  # should load this file directly
 ]
 
 
@@ -22,7 +22,8 @@ def test_locate_without_filter(source):
 
     def callback(msms: Spectrum, file_name: str):
         nonlocal count
-        count = count + 1
+        if msms is not None:
+            count = count + 1
 
     finder.locate(msmsSource=source, callback=callback)
 
@@ -41,11 +42,14 @@ def test_locate_with_msms_filter(source):
 
     def callback(msms: Spectrum, file_name: str):
         nonlocal count
-        count = count + 1
-        assert msms.ms_level > 1
+
+        if msms is not None:
+            count = count + 1
+            assert msms.ms_level > 1
 
     finder.locate(msmsSource=source, callback=callback, filters=[MSMinLevelFilter(2)])
     assert count > 0
+
 
 @pytest.mark.parametrize("source", sources)
 def test_convert(source):
@@ -59,13 +63,15 @@ def test_convert(source):
 
     def callback(msms: Spectrum, file_name: str):
         nonlocal count
-        count = count + 1
 
-        converted = msms.convert(msms)
+        if msms is not None:
+            count = count + 1
 
+            converted = msms.convert(msms)
 
     finder.locate(msmsSource=source, callback=callback, filters=[MSMinLevelFilter(2)])
     assert count > 0
+
 
 @pytest.mark.parametrize("source", sources)
 def test_locate_with_msms_and_compute_count(source):
@@ -80,10 +86,11 @@ def test_locate_with_msms_and_compute_count(source):
     def callback(msms: Spectrum, file_name: str):
         nonlocal count
 
-        if msms.ms_level not in count:
-            count[msms.ms_level] = 0
+        if msms is not None:
+            if msms.ms_level not in count:
+                count[msms.ms_level] = 0
 
-        count[msms.ms_level] = count[msms.ms_level] + 1
+            count[msms.ms_level] = count[msms.ms_level] + 1
 
     finder.locate(msmsSource=source, callback=callback)
 

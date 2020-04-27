@@ -1,11 +1,11 @@
 from keras import Model, Input
 
-from pyspec.machine.model.cnn import CNNClassificationModel
+from pyspec.machine.model.cnn import SingleInputCNNModel
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, BatchNormalization
 from keras.models import Sequential
 
 
-class SimpleCNNModel(CNNClassificationModel):
+class SimpleCNNModel(SingleInputCNNModel):
     """
     very basic cnn model to compare 2 images
     """
@@ -34,14 +34,11 @@ class SimpleCNNModel(CNNClassificationModel):
         model.add(Dropout(0.5))
         model.add(Dense(2, activation='softmax'))  # 2 because we have cat and dog classes
 
-        model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-
-        model.summary()
 
         return model
 
 
-class PoolingCNNModel(CNNClassificationModel):
+class PoolingCNNModel(SingleInputCNNModel):
     """
     utilize pooling resources
     """
@@ -87,7 +84,4 @@ class PoolingCNNModel(CNNClassificationModel):
 
         model.add(Dense(2, activation='softmax'))
 
-        model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-
-        model.summary()
         return model
