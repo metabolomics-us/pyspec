@@ -1,5 +1,3 @@
-from unittest import TestCase
-
 import pytest
 
 from pyspec.converter.mzml_to_csv import MZMLtoCSVConverter
