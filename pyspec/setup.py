@@ -1,7 +1,7 @@
 from sys import version_info
 from setuptools import setup, find_packages
 
-if version_info.major == 3 and version_info.minor < 6 or \
+if version_info.major == 3 and version_info.minor < 8 or \
         version_info.major < 3:
     print('Your Python interpreter must be 3.6 or greater!')
     exit(1)
