@@ -1,5 +1,5 @@
 import requests
-from typing import List
+from typing import List, Tuple
 
 from pyspec.loader import Spectra
 
@@ -91,8 +91,10 @@ class MoNALoader:
 
         if r.status_code == 200:
             return self._parse_spectrum(r.json())
+        elif r.status_code == 404:
+            return None
         else:
-            raise Exception(f'no spectrum available on MoNA with id: {id}')
+            raise Exception(f'error retriving MoNA spectrum with id: {id}')
 
     def query(self, rsql_query: str, page: int = None, page_size: int = None) -> List[Spectra]:
         """
@@ -118,7 +120,51 @@ class MoNALoader:
             data = r.json()
             return [self._parse_spectrum(s) for s in data]
         else:
-            raise Exception(f'no spectra found on MoNA for query: {rsql_query}')
+            raise Exception(f'error when executing query on MoNA: {rsql_query}')
+
+    def similarity_serarch(self, spectrum: str, min_similarity: float = 0.5,
+                           precursor_mz: float = None, precursor_tolerance: float = None,
+                           required_tags: List[str] = None, filter_tags: List[str] = None,
+                           size: int = 20) -> List[Tuple[Spectra, float]]:
+        """
+        execute a similarity search
+        :param spectrum:
+        :param min_similarity: minimum similarity score from 0 to 1
+        :param precursor_mz: optional precursor
+        :param precursor_tolerance: precursor search tolerance in dalton
+        :param required_tags: hits must match all of the required tags
+        :param filter_tags: hits must match at least one of the filter tags
+        :param size: number of search results to return
+        :return:
+        """
+
+        # build request body
+        body = {
+            'spectrum': spectrum,
+            'minSimilarity': min_similarity
+        }
+
+        if precursor_mz is not None:
+            body['precursorMZ'] = precursor_mz
+        if precursor_tolerance is not None:
+            body['precursorToleranceDa'] = precursor_tolerance
+        if required_tags is not None:
+            body['requiredTags'] = required_tags
+        if filter_tags is not None:
+            body['filterTags'] = filter_tags
+
+
+        # build url
+        url = f'{self.mona_url}/rest/similarity/search?size={size}'
+
+        r = requests.post(url, json=body)
+
+        # execute query
+        if r.status_code == 200:
+            data = r.json()
+            return [(self._parse_spectrum(x['hit']), x['score']) for x in data]
+        else:
+            raise Exception(f'error when executing similarity search on MoNA')
 
     def list_metadata_names(self) -> List[str]:
         """
