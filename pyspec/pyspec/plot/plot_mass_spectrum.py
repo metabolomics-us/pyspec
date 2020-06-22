@@ -54,7 +54,6 @@ def _plot_spectrum(spectrum, ax, reverse: bool = False, scale: float = 100, show
         # Plot ion labels
         if show_labels and len(labels) < n_labels and intensity > label_min_intensity and \
                 all(abs(mz - x) > 10 for x in labels):
-
             height = intensity + 2
             valign = 'top' if reverse else 'bottom'
 
@@ -71,7 +70,7 @@ def _plot_spectrum(spectrum, ax, reverse: bool = False, scale: float = 100, show
 
 
 def plot_mass_spectrum(spectrum, filename: str = None, title: str = None, scale: int = 100,
-                       mz_min: float = None, mz_max: float = None, dpi: int = 300):
+                       mz_min: float = None, mz_max: float = None, dpi: int = 300, ax=None):
     """
     plot a single mass spectrum
     :param spectrum:
@@ -84,7 +83,8 @@ def plot_mass_spectrum(spectrum, filename: str = None, title: str = None, scale:
     :return:
     """
 
-    fig, ax = plt.subplots(figsize=(12, 5))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(12, 5))
     _plot_spectrum(spectrum, ax, scale=scale, mz_min=mz_min, mz_max=mz_max)
 
     if title is not None:
@@ -159,7 +159,8 @@ def plot_multiple_mass_spectra(spectra: List, filename: str = None, scale: float
 
 
 def plot_head_to_tail_mass_spectra(spectrumA, spectrumB, filename: str = None, scale: float = 100, title: str = None,
-                                   labels: List[str] = None, mz_min: float = None, mz_max: float = None, dpi: int = 300):
+                                   labels: List[str] = None, mz_min: float = None, mz_max: float = None, dpi: int = 300,
+                                   figsize=(12, 5)):
     """
     plots a head-to-tails spectrum plot
     :param spectrumA:
@@ -174,7 +175,7 @@ def plot_head_to_tail_mass_spectra(spectrumA, spectrumB, filename: str = None, s
     :return:
     """
 
-    fig, (ax1, ax2) = plt.subplots(2, sharex=True, figsize=(12, 5))
+    fig, (ax1, ax2) = plt.subplots(2, sharex=True, figsize=figsize)
 
     _plot_spectrum(spectrumA, ax1, scale=scale, mz_min=mz_min, mz_max=mz_max)
     _plot_spectrum(spectrumB, ax2, scale=scale, mz_min=mz_min, mz_max=mz_max, reverse=True)
